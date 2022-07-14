@@ -1,0 +1,39 @@
+=======================================================================================
+** in select query, first sorting use then conditions check.
+
+- online: [https://www.mycompiler.io/new/sql]
+
+CREATE TABLE students (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  rank INTEGER
+);
+
+INSERT INTO students VALUES (1, 'ali', 10);
+INSERT INTO students VALUES (2, 'ali', 9);
+INSERT INTO students VALUES (3, 'zahra', 9);
+INSERT INTO students VALUES (4, 'zahra', 10);
+INSERT INTO students VALUES (5, 'alireza', 9);
+INSERT INTO students VALUES (6, 'alireza', 11);
+
+SELECT * FROM students WHERE rank > 9 order by name limit 2;
+-- SELECT * FROM students WHERE rank > 9 limit 2;
+-- SELECT * FROM students order by name;
+=======================================================================================
+order by if not null:
+
+ORDER BY
+    CASE WHEN Column1 IS NULL THEN Column2 ELSE Column1 END
+
+
+OR
+
+ORDER BY COALESCE(Column1, Column2)
+
+https://stackoverflow.com/questions/11003413/order-by-column1-if-column1-is-not-null-otherwise-order-by-column2
+=======================================================================================
+by condition:
+
+ORDER BY
+    CASE WHEN Status = 'Needs Response' THEN 0 ELSE 1 END, send_date DESC
+=======================================================================================

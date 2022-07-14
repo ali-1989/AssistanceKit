@@ -1,0 +1,42 @@
+============================================================================================
+RAISE EXCEPTION '{"std_response":{"affected":%,"error":%}}', var_affected, var_error_id;
+RAISE NOTICE 'a:%, b:%', var_a, var_b;
+============================================================================================
+begin;
+do $$
+    declare
+        f1 bigint;
+        r record;
+
+    begin
+        ...;
+end;
+$$ LANGUAGE plpgsql;
+
+commit;
+--------------------------------------------------------------------
+do $$
+    declare
+        f1 bigint;
+        r record;
+
+    begin
+        ...;
+end $$ LANGUAGE plpgsql;
+--------------------------------------------------------------------
+============================================================================================
+begin;
+
+DO $$
+DECLARE
+  _query text;
+  _cursor CONSTANT refcursor := '_cursor';
+BEGIN
+  _query := 'SELECT * FROM table_name';
+  OPEN _cursor FOR EXECUTE _query;
+END $$;
+
+FETCH ALL FROM _cursor;
+
+commit;
+============================================================================================

@@ -1,0 +1,50 @@
+=============================================================================================
+CREATE TYPE
+ALTER TYPE
+DROP TYPE
+=============================================================================================
+CREATE TYPE film_summary AS (
+    film_id INT,
+    title VARCHAR,
+    release_year SMALLINT
+);
+=============================================================================================
+CREATE TYPE name AS ENUM  ( [ 'label' [, ... ] ] )
+
+CREATE TYPE bug_status AS ENUM ('new', 'open', 'closed');
+=============================================================================================
+* type and function:
+
+CREATE TYPE tt AS (f1 int, f2 text);
+
+CREATE FUNCTION getX() RETURNS SETOF tt AS $$
+    SELECT id, name FROM foo
+$$ LANGUAGE SQL;
+=============================================================================================
+* type and table:
+
+CREATE TYPE dataset AS (
+    id integer
+   ,t  timestamp
+   ,x  float
+);
+
+CREATE TABLE source OF dataset;
+CREATE TABLE source OF dataset (PRIMARY KEY(Id));
+=============================================================================================
+CREATE TYPE box;
+
+CREATE FUNCTION my_box_in_function(cstring) RETURNS box AS ... ;
+CREATE FUNCTION my_box_out_function(box) RETURNS cstring AS ... ;
+
+CREATE TYPE box (
+    INTERNALLENGTH = 16,
+    INPUT = my_box_in_function,
+    OUTPUT = my_box_out_function
+);
+
+CREATE TABLE myboxes (
+    id integer,
+    description box
+);
+=============================================================================================

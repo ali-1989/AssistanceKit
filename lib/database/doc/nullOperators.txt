@@ -1,0 +1,24 @@
+===================================================================================
+COALESCE:
+
+* return first arg that is not null, if arg1 is null, next arg check, if it is null, next arg check else return this
+
+- COALESCE(NULLIF(yourField,'') , '0');
+===================================================================================
+NULLIF:
+
+* The NULLIF function will return null if yourField is equals to the second value.
+
+NULLIF(col, 'ali');  >> return null if col == 'ali'
+===================================================================================
+Select NULL AND False:
+
+SELECT * FROM table_name WHERE boolean_column IS NULL
+UNION
+SELECT * FROM table_name WHERE boolean_column = FALSE
+
+OR
+
+SELECT * FROM table_name WHERE COALESCE(boolean_column, FALSE) = FALSE
+
+===================================================================================

@@ -1,0 +1,33 @@
+===================================================================================
+- https://docs.yugabyte.com/latest/api/ysql/datatypes/type_array/looping-through-arrays/
+===================================================================================
+FOR fetchRecord IN (WITH
+			w1 AS (SELECT T1.customerid AS customerid1, T1.observerid, T1.setdate, T2.adviserid AS adviserid1, isviewbyadviser FROM "CustomersVsObserver" AS T1 INNER JOIN "CustomersVsAdviser" AS T2 USING (customerid) WHERE T1.observerid = i_observerId ORDER BY t1.setdate DESC)
+		,w2 AS (SELECT T1.*, MAX(calldate) OVER (PARTITION BY AdviserID, CustomerID) AS lastDate FROM "CustomerCallingInfo" AS T1)
+		,w3 AS (SELECT T1.*, T2.* FROM w1 AS T1 LEFT JOIN w2 AS T2 ON T1.customerid1 = T2.customerid AND T1.adviserid1 = T2.adviserid
+															WHERE (  (i_callRange ISNULL AND (T2.CallDate ISNULL OR (T2.CallDate = T2.lastDate))
+																					OR (i_callRange NOTNULL AND i_callRange ::TSRANGE @> t2.lastDate AND T2.CallDate = T2.lastDate)
+																					 ) AND (i_callState ISNULL OR T2.callstate = i_callState)
+																				)
+		)
+	SELECT * FROM w3 AS T1
+									LEFT JOIN "CustomerModels" AS T2 ON T1.customerid1 = T2.connectid
+									LEFT JOIN "CommonUsersModel" AS T3 ON T1.customerid1 = T3.userid
+
+					 WHERE (name LIKE textCondition OR family LIKE textCondition OR city LIKE textCondition OR study LIKE textCondition
+										OR message LIKE textCondition OR customermsg LIKE textCondition OR uniquekey LIKE textCondition)
+
+						 AND (i_byGift ISNULL OR (i_byGift AND exists(SELECT 1 FROM "Gifts" AS TEMP1 WHERE TEMP1.customerid = T1.CUSTOMERID1 LIMIT 1))
+										OR (i_byGift = FALSE AND not exists(SELECT 1 FROM "Gifts" AS TEMP1 WHERE TEMP1.customerid = T1.CUSTOMERID1 LIMIT 1)))
+
+						 AND (i_gradeMin ISNULL OR (grade >= i_gradeMin AND grade <= i_gradeMax))
+
+					 ORDER BY T1.lastDate DESC nulls last
+					 LIMIT i_limit OFFSET i_rowOffset) LOOP
+
+		WITH W1 AS (SELECT * FROM "CustomerCallingInfo" AS t1 WHERE t1.customerid = fetchRecord.customerid AND t1.adviserid = fetchRecord.adviserid)
+		SELECT INTO result."AllCallCount" COUNT(customerid) FROM W1;
+
+		WITH C AS (SELECT * FROM "CustomerCallingInfo" AS t1 WHERE t1.customerid = fetchRecord.customerid AND t1.adviserid = fetchRecord.adviserid)
+		SELECT INTO result."ObserverCallCount" COUNT(customerid) FROM C WHERE calldate > fetchRecord.setdate;
+===================================================================================

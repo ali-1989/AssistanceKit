@@ -1,0 +1,128 @@
+============================================================================================
+RAISE EXCEPTION '{"std_response":{"affected":%,"error":%}}', var_affected, var_error_id;
+RAISE NOTICE 'a:%, b:%', var_a, var_b;
+============================================================================================
+CREATE OR REPLACE FUNCTION inc(val integer)
+    RETURNS integer
+AS $$
+BEGIN
+    RETURN val + 1;
+END $$ LANGUAGE PLPGSQL;
+----------------------------------------------
+CREATE OR REPLACE FUNCTION fun(text)
+    RETURNS [SETOF] users
+AS $$
+SELECT * FROM users WHERE name = $1
+$$   LANGUAGE SQL;
+
+select * from fun('ali');
+----------------------------------------
+CREATE OR REPLACE FUNCTION del()
+    RETURNS void
+AS $$
+BEGIN
+    DELETE FROM badWords where true;
+END; $$ LANGUAGE PLPGSQL;
+----------------------------------------
+CREATE OR REPLACE FUNCTION fName(var int)
+    RETURNS TABLE (code integer, area smallint)
+AS $f$
+DECLARE
+    myCursor refcursor;
+    myRow users%ROWTYPE;
+    myRow2 RECORD;
+    myAlias ALIAS FOR $1;
+    myField users.name%TYPE;
+    myTable TABLE(int a);
+    myTable2 "tablename";
+    v1 integer DEFAULT 32;
+    v2 integer := 32;
+
+BEGIN
+    SELECT code, area FROM testTable;
+end $f$ LANGUAGE sql;
+============================================================================================
+CREATE OR REPLACE FUNCTION fName(var int)
+    RETURNS TABLE (code integer, area smallint)
+AS $f$
+DECLARE
+    myCursor refcursor;
+
+BEGIN
+
+    SELECT * FROM qtable WHERE ...;
+
+    OPEN sec_col FOR
+    SELECT * FROM t WHERE ...;
+
+    FOR i IN 1..10
+    LOOP
+        FETCH sec_col INTO sec_code;
+
+        RETURN QUERY
+        SELECT * FROM qtable;
+    END LOOP;
+
+    CLOSE sec_col;
+
+END $f$ LANGUAGE sql;
+============================================================================================
+regclass:
+
+CREATE TYPE dataset AS (id integer, t timestamp, x float);
+
+CREATE OR REPLACE FUNCTION process(_tbl regclass)
+  RETURNS SETOF dataset AS
+$func$
+    BEGIN
+    RETURN QUERY EXECUTE 'SELECT * FROM ' || _tbl;
+
+END $func$  LANGUAGE plpgsql;
+
+SELECT * FROM process('tableName');
+---------------------------------------------------
+CREATE OR REPLACE FUNCTION process(_tbl anyelement)
+  RETURNS SETOF anyelement AS
+$func$
+BEGIN
+    RETURN QUERY EXECUTE 'SELECT * FROM ' || pg_typeof(_tbl);
+END
+$func$  LANGUAGE plpgsql;
+
+SELECT * FROM process(NULL::tableName);
+============================================================================================
+CREATE FUNCTION test()
+ RETURNS SETOF RECORD
+ AS $$
+DECLARE
+ rec record;
+
+BEGIN
+  select 1,2 into rec;
+  return next rec;
+
+  select 3,4 into rec;
+  return next rec;
+END $$
+ language plpgsql;
+
+select * from test() as x(a int ,b int);
+============================================================================================
+CREATE OR REPLACE FUNCTION xxx(ids varchar)
+    RETURNS setof conversationmessage
+AS $f$
+DECLARE
+        f1 bigint;
+        arr bigint[] = ('{'|| ids ||'}')::bigint[];
+
+    BEGIN
+        FOREACH f1 IN ARRAY arr
+            LOOP
+                return query SELECT * FROM conversationmessage
+                WHERE conversation_id = f1
+                ORDER BY server_receive_ts
+                LIMIT 2;
+            END LOOP;
+        RETURN;
+END $f$ LANGUAGE plpgsql;
+============================================================================================

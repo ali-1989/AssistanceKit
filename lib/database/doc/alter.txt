@@ -1,0 +1,12 @@
+===================================================================================
+ALTER:
+
+ALTER TABLE CustomerModels DROP COLUMN FileID;";
+ALTER TABLE CustomersVsAdviser ADD COLUMN IsViewByAdviser BOOLEAN DEFAULT false;";
+ALTER TABLE CustomerModels ALTER COLUMN AdviserMsg SET DEFAULT '';";
+ALTER TABLE CustomerCallingInfo RENAME COLUMN State TO CallState;";
+ALTER TABLE balances ALTER COLUMN Date TYPE TIMESTAMPTZ";
+ALTER TABLE CustomerCallingInfo ALTER COLUMN CallDate TYPE TIMESTAMPTZ USING CallDate AT TIME ZONE 'Asia/Tehran'";
+===================================================================================
+ALTER DATABASE "VenusDB" SET TIMEZONE = 'UTC'";
+===================================================================================

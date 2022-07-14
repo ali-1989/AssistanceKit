@@ -1,0 +1,20 @@
+==================================================================================================
+* https://www.postgresql.org/docs/release/14.0/
+==================================================================================================
+Prevent the containment operators (<@ and @>) for intarray from using GiST indexes (Tom Lane)
+
+Previously a full GiST index scan was required,
+ so just avoid that and scan the heap, which is faster.
+ Indexes created for this purpose should be removed.
+==================================================================================================
+Process doubled quote marks in ecpg SQL command strings correctly (Tom Lane)
+
+Previously 'abc''def' was passed to the server as 'abc'def', and "abc""def" was passed as "abc"def",
+ causing syntax errors.
+==================================================================================================
+Remove support for postfix (right-unary) operators (Mark Dilger)
+==================================================================================================
+Fix handling of infinite window function ranges (Tom Lane)
+==================================================================================================
+Change EXTRACT() to return type numeric instead of float8 (Peter Eisentraut)
+==================================================================================================

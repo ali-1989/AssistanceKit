@@ -1,0 +1,37 @@
+=========================================================================================
+https://patshaughnessy.net/2017/12/11/trying-to-represent-a-tree-structure-using-postgres
+https://www.mediasuite.co.nz/blog/trees-in-postgresql/
+https://coderwall.com/p/whf3-a/hierarchical-data-in-postgres
+https://en.wikipedia.org/wiki/Nested_set_model
+https://stackoverflow.com/questions/192220/what-is-the-most-efficient-elegant-way-to-parse-a-flat-table-into-a-tree/22376973#22376973
+=========================================================================================
+Insert / Transaction;
+
+BEGIN TRANSACTION;
+
+    WITH l1 AS (
+        INSERT INTO users (name)
+            VALUES ('foo') RETURNING user_id
+        ),
+        l2 AS (
+        INSERT INTO users (name)
+        VALUES ('l2' || (SELECT user_id FROM l1)) RETURNING user_id
+        )
+
+    INSERT INTO users
+    (name) VALUES ('l3' || (SELECT user_id FROM l2));
+
+END TRANSACTION;
+=========================================================================================
+WITH l1 AS (
+          INSERT INTO foodProgramTree (parent_id, program_id, type_lkp, title, is_base)
+              VALUES (null, $programId, 1, '', false) RETURNING id
+          ),
+          l2 AS (
+          INSERT INTO foodProgramTree (parent_id, program_id, type_lkp, title, is_base)
+          VALUES (null, $programId, 2, '', false) RETURNING id
+          )
+      INSERT INTO foodProgramTree
+          (parent_id, program_id, type_lkp, title, is_base)
+           VALUES (null, $programId, 3, '', false);
+=========================================================================================

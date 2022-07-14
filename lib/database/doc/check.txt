@@ -1,0 +1,24 @@
+========================================================================================
+* check one row can is main:
+
+CREATE FUNCTION check_one_true_bankCard(new_val bool)
+      RETURNS int AS
+      $$
+      BEGIN
+          RETURN
+          (
+              SELECT COUNT(*) + (CASE new_val WHEN true THEN 1 ELSE 0 END)
+              FROM #tb
+              WHERE is_main = true
+          );
+      END
+      $$
+      LANGUAGE PLPGSQL STABLE;
+
+
+CREATE TABLE IF NOT EXISTS #tb (
+      user_id BIGINT NOT NULL,
+      is_main BOOL DEFAULT FALSE,
+      CONSTRAINT ck_#tb CHECK(check_one_true_bankCard(is_main) = 1)
+   );
+========================================================================================

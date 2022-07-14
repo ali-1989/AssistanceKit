@@ -1,0 +1,20 @@
+=================================================================================================
+
+
+BEGIN TRANSACTION;
+
+WITH l1 AS (
+    INSERT INTO users (name)
+        VALUES ('foo') RETURNING user_id
+    ),
+    l2 AS (
+    INSERT INTO users (name)
+    VALUES ('l2' || (SELECT user_id FROM l1)) RETURNING user_id
+    )
+
+INSERT INTO users
+    (name) VALUES ('l3' || (SELECT user_id FROM l2));
+
+END TRANSACTION;
+
+=================================================================================================

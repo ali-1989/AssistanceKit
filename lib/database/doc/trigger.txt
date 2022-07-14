@@ -1,0 +1,20 @@
+==============================================================================================
+* avoid delete row if :
+
+CREATE FUNCTION dont_delete_foo_true()
+RETURNS TRIGGER AS
+$$
+BEGIN
+    IF old.boolColumn THEN
+        raise exception 'Can''t delete row where boolColumn is true.';
+    END IF;
+    RETURN old;
+END;
+$$ LANGUAGE PLPGSQL;
+
+
+CREATE TRIGGER trg_test_delete
+BEFORE DELETE ON test
+FOR EACH ROW
+EXECUTE PROCEDURE dont_delete_foo_true();
+==============================================================================================

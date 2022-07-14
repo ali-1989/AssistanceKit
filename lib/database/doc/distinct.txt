@@ -1,0 +1,72 @@
+===================================================================================
+
+https://stackoverflow.com/questions/9795660/postgresql-distinct-on-with-different-order-by
+https://stackoverflow.com/questions/9796078/selecting-rows-ordered-by-some-column-and-distinct-on-another
+===================================================================================
+SELECT * FROM (
+    SELECT DISTINCT ON(ticket_id) * FROM ticketmessage
+      ORDER BY ticket_id, server_receive_ts DESC
+    ) AS t1
+    ORDER BY server_receive_ts;
+
+
+old:
+
+SELECT * FROM Customer AS t1
+	INNER JOIN
+	(SELECT DISTINCT ON(AdviserID,CustomerID) AdviserID,CustomerID, MAX(calldate) OVER (PARTITION BY AdviserID,CustomerID) AS lastCall
+		FROM Customer WHERE TRUE)AS t2
+	ON t1.customerid = t2.customerid AND t1.adviserid = t2.adviserid
+		WHERE t1.calldate = t2.lastCall and t1.callState NOT NULL)
+
+
+
+SELECT * FROM Customer AS t1
+	WHERE t1.calldate = (SELECT DISTINCT ON(AdviserID,CustomerID) MAX(calldate) OVER (PARTITION BY AdviserID,CustomerID) AS lastCall
+		FROM "CustomerCallingInfo" WHERE w2.customerid = t1.customerid AND w2.adviserid = t1.adviserid))
+===================================================================================
+With c1 AS
+         (SELECT id, title, start_date, starter_user_id, type,
+                 is_close, is_deleted
+          FROM ticket
+             ),
+     c2 AS
+         (SELECT DISTINCT ON(t1.ticket_id) t2.*,
+                   t1.id as message_id, t1.message_text, t1.server_receive_ts, t1.message_type
+          FROM ticketmessage AS t1
+          RIGHT JOIN c1 AS t2 ON t1.ticket_id = t2.id
+          ORDER BY ticket_id, server_receive_ts DESC
+         ),
+
+     c3 AS
+         (SELECT t1.user_name as sender_user_name, t2.* FROM usernameid AS t1
+             RIGHT JOIN c2 AS t2 ON t1.user_id = t2.starter_user_id
+         )
+ SELECT * FROM c3 ORDER BY server_receive_ts DESC nulls LAST;
+===================================================================================
+With c1 AS
+         (SELECT id, title, start_date, starter_user_id, type,
+                 is_close, is_deleted
+          FROM @ticket
+          WHERE (@w1)
+          OFFSET ox LIMIT lx
+             ),
+     c2 AS
+         (SELECT t1.user_name as sender_user_name, t2.* FROM @usernameid AS t1
+             RIGHT JOIN c1 AS t2 ON t1.user_id = t2.starter_user_id
+         ),
+     c3 AS
+         (SELECT DISTINCT ON(t2.ticket_id) t1.*,
+                                t2.id as message_id, t2.message_text,t2.server_receive_ts,t2.message_type FROM c2 AS t1
+                 LEFT JOIN @ticketmessage AS t2
+                     ON t1.id = t2.ticket_id
+                 ORDER BY ticket_id, server_receive_ts DESC
+         )
+
+  SELECT * FROM c3 ORDER BY is_deleted, server_receive_ts DESC nulls LAST;
+===================================================================================
+SELECT * FROM (SELECT DISTINCT ON (AdviserID,CustomerID) AdviserID,CustomerID, MAX(calldate) OVER (PARTITION BY AdviserID,CustomerID) As max
+               FROM "CustomerCallingInfo" WHERE adviserid = 1001) AS t1
+ INNER JOIN "CustomerCallingInfo" AS t2
+ ON t1.adviserid = t2.adviserid AND t1.customerid = t2.customerid WHERE t2.adviserid = 1001 AND t2.callstate = FALSE AND t2.calldate = t1.max;
+===================================================================================

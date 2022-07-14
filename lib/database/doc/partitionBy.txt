@@ -1,0 +1,40 @@
+==============================================================================================
+SELECT * FROM
+    (SELECT DISTINCT ON (AdviserID, CustomerID) AdviserID, CustomerID,
+        MAX(calldate) OVER (PARTITION BY AdviserID, CustomerID) As max
+     FROM "CustomerCallingInfo"
+        WHERE adviserid = 1001) AS t1
+
+ INNER JOIN "CustomerCallingInfo" AS t2
+
+ ON t1.adviserid = t2.adviserid AND t1.customerid = t2.customerid
+
+ WHERE t2.adviserid = 1001 AND t2.callstate = FALSE AND t2.calldate = t1.max;
+==============================================================================================
+SELECT
+    t1.user_id, t1.user_name,
+
+    t2.image_path as image_uri,
+
+    t3.name, t3.family, t3.sex, t3.birthdate,
+    t4.course_count
+
+    FROM usernameid AS t1
+         LEFT JOIN userimages AS t2
+            ON t1.user_id = t2.user_id
+         JOIN users AS t3
+    ON t1.user_id = t3.user_id
+         LEFT JOIN (
+             SELECT DISTINCT ON (creator_user_id)
+                    count(creator_user_id) OVER (PARTITION BY creator_user_id) as course_count,
+
+                 * FROM course
+             WHERE is_block = false AND is_private_show = false
+        ) AS t4
+                   ON t1.user_id = t4.creator_user_id
+
+WHERE (true)
+    AND (T2.type = 1 OR t2.type IS NULL)
+
+LIMIT 10;
+==============================================================================================

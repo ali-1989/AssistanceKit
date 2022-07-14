@@ -1,0 +1,28 @@
+====================================================================================
+multi returning:
+
+create table te1 (id bigserial not null, name varchar(20));
+
+with
+    ids as (
+        insert into te1 (name)
+            values ('ali'),
+             ('zahra'),
+             ('fatemeh')
+            returning id
+    )
+
+select * from ids;
+------------------------------------------------
+insert into te1 (name)
+values ('ali'),
+       ('zahra'),
+       ('fatemeh')
+returning id;
+====================================================================================
+generate_series:
+
+INSERT INTO ticketmessage (ticket_id, message_type, message_text, sender_user_id, user_send_ts, server_receive_ts)
+    values (1, 1, 'hello ticket ', 160, (now() at time zone 'utc'),
+            generate_series((now() at time zone 'utc') , (now() at time zone 'utc') + interval '5 day', '1 day') );
+====================================================================================

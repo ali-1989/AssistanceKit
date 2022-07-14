@@ -1,0 +1,26 @@
+===================================================================================
+SELECT
+  t1.id,
+  array_agg(t.x)
+FROM
+  t1 JOIN LATERAL
+    (SELECT t2.id as x FROM t2 WHERE t1.id = t2.t1_id
+        ORDER BY t2.id DESC OFFSET 2 LIMIT 3) t on (true)
+GROUP BY t1.id;
+===================================================================================
+SELECT p.id, count(parts.part_id) AS total
+FROM (SELECT id FROM products
+      LIMIT 1000 OFFSET 99000) AS p
+   LEFT JOIN parts ON parts.product_id = p.id
+GROUP BY p.id;
+===================================================================================
+SELECT *
+FROM (
+   SELECT qid, gid
+   FROM table1
+   ORDER BY date DESC
+   LIMIT 10
+   OFFSET ?
+   ) AS q
+JOIN table2 AS a USING (qid, gid)
+===================================================================================

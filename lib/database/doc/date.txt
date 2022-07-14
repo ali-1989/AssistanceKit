@@ -1,0 +1,22 @@
+===================================================================================
+select inclusive_upper_daterange('[2014/01/01, 2014/01/31]'::daterange); >> 2014-01-31
+===================================================================================
+SELECT (DATE '2001-02-16', DATE '2001-12-21') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');				Result: true  (دو تاریخ دارای روز مشترک هستند)
+===================================================================================
+SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');			Result: 16
+===================================================================================
+SELECT * FROM table_name WHERE the_date > DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+
+OR
+
+SELECT * FROM tb WHERE  record_date >= NOW() - '1 day'::INTERVAL
+===================================================================================
+WHERE (receive_program_date is null OR ((receive_program_date + (duration_day || ' day')::interval) < now()))
+===================================================================================
+query1 TEXT := 'SELECT * FROM "ChatMessages" WHERE SendTS > '||quote_literal(i_lastTS)||'::timestamp - interval '|| quote_literal('1 DAY ') ||' AND StarterID ='||  i_StarterID||'  AND VersusID =  '||i_versusId||';';
+===================================================================================
+INSERT INTO ticketmessage (ticket_id, message_type, message_text, sender_user_id, user_send_ts, server_receive_ts)
+    values (1, 1, 'hello ticket ', 160, (now() at time zone 'utc'),
+            generate_series((now() at time zone 'utc') , (now() at time zone 'utc') + interval '5 day', '1 day') );
+===================================================================================

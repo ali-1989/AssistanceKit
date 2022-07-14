@@ -1,0 +1,75 @@
+=========================================================================================
+INDEX & partitions:
+
+* INDEX is cascaded down to all the partitions in PostgreSQL 11.
+* can as well create an INDEX on a specific partition only.
+
+https://blog.dbi-services.com/local-partitioned-indexes-in-postgresql-11/
+=========================================================================================
+PRIMARY KEY & partitions:
+
+* PRIMARY KEY constraints are NOT SUPPORTED on partitioned tables.
+* must do that on the partitions directly.
+
+S: ALTER TABLE part_1 ADD CONSTRAINT part1_pk PRIMARY KEY(a,list);
+
+https://blog.dbi-services.com/local-partitioned-indexes-in-postgresql-11/
+=========================================================================================
+FOREIGN KEY & partitions:
+
+* Postgres 12 supports FOREIGN KEY in all states.
+
+=========================================================================================
+CHECK constraint & partitions:
+
+* CHECK constraint is cascaded down to all the partitions in PostgreSQL.
+* Both CHECK and NOT NULL constraints of a 'partitioned table' are always inherited by all its partitions.
+
+S: ALTER TABLE part_1 ADD CONSTRAINT part1_pk PRIMARY KEY(a,list);
+
+https://blog.dbi-services.com/postgresql-partitioning-7-indexing-and-constraints/
+=========================================================================================
+pruning:
+
+https://blog.dbi-services.com/postgresql-partitioning-5-partition-pruning/
+=========================================================================================
+attaching and detaching:
+
+https://blog.dbi-services.com/postgresql-partitioning-6-attaching-and-detaching-partitions/
+=========================================================================================
+manual partition:
+
+https://severalnines.com/database-blog/guide-partitioning-data-postgresql
+=========================================================================================
+auto partition:
+
+https://medium.com/swlh/beginners-guide-to-table-partitioning-in-postgresql-5a014229042
+https://www.2ndquadrant.com/en/blog/postgresql-12-partitioning/
+=========================================================================================
+Hash model:
+
+* hash can have multi columns. [PARTITION BY HASH (batch_key, user_id)]
+
+https://blog.dbi-services.com/hash-partitioning-in-postgresql-11/
+https://blog.dbi-services.com/postgresql-partitioning-4-hash-partitioning/
+=========================================================================================
+Range model:
+
+* partitioning by a range (typically based on day, year, month)
+* Range partition does not allow NULL values.
+
+https://blog.dbi-services.com/postgresql-partitioning-2-range-partitioning/
+=========================================================================================
+List model:
+
+* list partitioning is used to partition on an explicit list with key values that define the partitions.
+
+https://blog.dbi-services.com/postgresql-partitioning-3-list-partitioning/
+=========================================================================================
+default partition:
+
+CREATE TABLE table_default
+    PARTITION OF patent_table DEFAULT;
+
+A default partition will hold all the rows that do not match any of the existing partition definitions.
+=========================================================================================
