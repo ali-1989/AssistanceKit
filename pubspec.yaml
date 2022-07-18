@@ -1,17 +1,19 @@
 name: assistance_kit
-description: A sample command-line application.
-# version: 1.0.0
+description: tools package.
 # homepage: https://www.example.com
 
+publish_to: 'none'
+
+version: 0.1.0
+
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.15.0'
 
 dependencies:
-  postgresql2: ^1.0.0                         # pool   {is Edited type_converter}
-  postgres: ^2.3.2                            # transaction
+  postgresql2: ^1.0.0                         # Edited, pool   {is Edited type_converter}
+  postgres: ^2.4.5                            # transaction
   file: ^6.1.2
-  http: ^0.13.3
+  http: ^0.13.4
 
 dev_dependencies:
-  pedantic: ^1.9.0
-  test: ^1.14.4
+  test: ^1.21.4
