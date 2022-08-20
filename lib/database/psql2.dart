@@ -464,6 +464,18 @@ class Psql2 {
     return execution(query);
   }
 
+  Future<List?> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
+    final col = kv.keys.toList();
+    final val = kv.values.toList();
+
+    if(await exist(tbName, where)){
+      return updateReturning(tbName, _genUpdateSetStatement(col, val), where, returning);
+    }
+
+    final query = 'INSERT INTO $tbName (${col.join(',')}) values(${_joinValue(val)}) ON CONFLICT DO NOTHING RETURNING $returning;';
+    return queryCall(query);
+  }
+
   Future<int?> upsertValues(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
     final set = _genUpdateSetStatement(columns, values);
 
@@ -477,6 +489,14 @@ class Psql2 {
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';
     return execution(query);
+  }
+
+  // UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
+  Future<List?> updateReturning(String tbName, String setStatement, String? where, String returning) async{
+    where ??= '1 = 1';
+
+    final query = 'UPDATE $tbName SET $setStatement WHERE $where RETURNING $returning;';
+    return queryCall(query);
   }
 
   Future<int?> updateByAt(String tbName, String setStatement, String? where, Map<String, dynamic> values) async{
@@ -586,6 +606,16 @@ class Psql2 {
     return execution(query);
   }
 
+  Future<List<Row>?> getColumsName(String tabelName) async{
+    final query = '''
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = '$tabelName';
+    ''';
+
+    return queryCall(query);
+  }
+
   Pool? get pool => _pool;
   Connection get connection => _connection;
   ///================ tools =====================================================
@@ -620,7 +650,7 @@ class Psql2 {
         res += '"$d",';
       }
       else {
-        res += d + ',';
+        res += '$d,';
       }
     }
 
@@ -642,7 +672,7 @@ class Psql2 {
       return "'{}'::int[]";
     }
 
-    return "'${listToPgArrayWithoutClass(list)}'::text[]";
+    return "'${listToPgArrayWithoutClass(list)}'::int[]";
   }
 
   static String listToSequence(Iterable input, {String onEmpty = '-1'}) {
