@@ -102,7 +102,33 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     _useDST = state;
   }
 
-  bool isAtDaylightRange();
+  bool isAtDaylightRange(){
+    /// این به کشور جاری مربوط می شود پس باید کشور دریافت شود و بر مبنای تاریخ میلادی چک شود ایا در بازه هست یا خیر
+
+    if(isCountryDayLightActive()){
+      final dt = convertToSystemDate();
+
+      final base = DateTime(dt.year, dt.month, dt.day);
+      final baseUtc = DateTime.utc(dt.year, dt.month, dt.day);
+
+      final moveTemp = base.add(Duration(days: 190));
+
+      final move = DateTime(moveTemp.year, moveTemp.month, moveTemp.day);
+      final moveUtc = DateTime.utc(moveTemp.year, moveTemp.month, moveTemp.day);
+
+      final dif1 = base.difference(baseUtc);
+      final dif2 = move.difference(moveUtc);
+
+      if(dif1 == dif2){
+        return false;
+      }
+
+      return dif1 < dif2;
+    }
+
+    return false;
+  }
+
   bool isValidDate();
   bool isLeapYear();
   List<int> getLeapYears(int start, int end); //  := [start, end)
@@ -306,13 +332,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
         sec > 59 ||
         mil < 0 ||
         mil > 999) {
-      throw Exception('Err: changeTime(), parameters are invalid (' +
-          hour.toString() +
-          ':' +
-          min.toString() +
-          ':' +
-          sec.toString() +
-          '). ');
+      throw Exception('Err: changeTime(), parameters are invalid ($hour:$min:$sec). ');
     }
 
     var time = 0;
@@ -328,6 +348,32 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     _setValue(res + time);
 
     _reset();
+  }
+
+  bool isCountryDayLightActive(){
+    Duration? dif;
+    var dl = false;
+    final today = DateTime.now();
+
+    for(int i=1; i <= 12; i++){
+      var d1 = DateTime(today.year, i, 1);
+      var d12 = DateTime.utc(today.year, i, 1);
+
+      if(dif == null) {
+        dif = d1.difference(d12);
+        continue;
+      }
+
+      if(dif != d1.difference(d12)){
+        dl = true;
+        break;
+      }
+    }
+
+    return dl;
+  }
+  void changeTimezone(String tz){
+    _timeZone = tz;
   }
 
   T moveHour<T extends ADateStructure>(int addHor) {
@@ -468,17 +514,17 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
   }
 
   int _getTimeZoneOffset(){
-    return TimeZone.getOffsetAsMillis(_timeZone, dayLight: getDaylightState());
+    return TimeZone.getOffsetAsMillisByDayLight(_timeZone, getDaylightState());
   }
 
-  void moveUtcToLocal<T extends ADateStructure>() {
+  /*void moveUtcToLocal<T extends ADateStructure>() {
     final temp = DateTime.now();
     //var dt = DateTime(2021,4,4); error for dayLight
     var localOffset = temp.timeZoneOffset.inMilliseconds;
 
-    /*if(!getDaylightState()){
+    *//*if(!getDaylightState()){
       localOffset -= 60*60*1000;
-    }*/
+    }*//*
 
     if (_getTimeZoneOffset() == localOffset) {
       return;
@@ -487,8 +533,21 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     moveMillSecond(localOffset);
 
     //final now = GregorianDate();
-    _timeZone = TimeZone.getFirstTimeZoneByOffset(localOffset, dayLight: getDaylightState());
+    _timeZone = TimeZone.getFirstTimeZoneByOffset(localOffset);//dayLight: getDaylightState()
     //return this as T;
+  }*/
+
+  void moveUtcToLocal<T extends ADateStructure>() {
+    final temp = DateTime.now();
+    final localOffset = temp.timeZoneOffset.inMilliseconds;
+
+    if (_getTimeZoneOffset() == localOffset) {
+      return;
+    }
+
+    moveMillSecond(localOffset);
+
+    _timeZone = TimeZone.getFirstTimeZoneByOffsetDayLight(localOffset, getDaylightState());
   }
 
   void moveLocalToUTC<T extends ADateStructure>() {
@@ -638,7 +697,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     }*/
 
     String wrapByRtl(String inp){
-      return '\u202B' + inp + '\u202C';
+      return '\u202B$inp\u202C';
     }
 
     RegExpMatch match;
@@ -672,7 +731,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
     rep = getMonth().toString();
 
-    if (rep.length < 2) rep = '0' + rep;
+    if (rep.length < 2) rep = '0$rep';
 
     while (patMM.hasMatch(res)) {
       match = patMM.allMatches(res).elementAt(0);
@@ -687,7 +746,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
     rep = getDay().toString();
 
-    if (rep.length < 2) rep = '0' + rep;
+    if (rep.length < 2) rep = '0$rep';
 
     while (patDD.hasMatch(res)) {
       match = patDD.allMatches(res).elementAt(0);
@@ -695,7 +754,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     }
 
     rep = hoursOfToday().toString();
-    if (rep.length < 2) rep = '0' + rep;
+    if (rep.length < 2) rep = '0$rep';
 
     while (patHH.hasMatch(res)) {
       match = patHH.allMatches(res).elementAt(0);
@@ -709,7 +768,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
     }
 
     rep = minutesOfToday().toString();
-    if (rep.length < 2) rep = '0' + rep;
+    if (rep.length < 2) rep = '0$rep';
 
     while (patMin2.hasMatch(res)) {
       match = patMin2.allMatches(res).elementAt(0);

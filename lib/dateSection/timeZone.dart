@@ -3,7 +3,7 @@ import 'package:assistance_kit/api/system.dart';
 class TimeZone {
   TimeZone._();
 
-  static Duration getOffset(String timezone, {bool dayLight = true}){
+  static Duration getOffset(String timezone, {bool dayLight = false}){
     final res = _getTimezoneUTCOffset(timezone, daylight: dayLight);
 
     if(res != null){
@@ -14,17 +14,30 @@ class TimeZone {
     return now.timeZoneOffset;
   }
 
-  static int getOffsetAsMillis(String timezone, {bool dayLight = true}){
+  static int getOffsetAsMillisByDayLight(String timezone, bool dayLight){
     return getOffset(timezone, dayLight: dayLight).inMilliseconds;
   }
 
-  static List<String> getTimeZonesByOffset(int offsetMillis, {bool dayLight = true}){
+  static int getOffsetAsMillis(String timezone){
+    return getOffset(timezone).inMilliseconds;
+  }
+
+  static List<String> getTimeZonesByOffset(int offsetMillis){
+    return _getTimezoneNames(offsetMillis);
+  }
+
+  static List<String> getTimeZonesByOffsetAndDayLight(int offsetMillis, bool dayLight){
     return _getTimezoneNames(offsetMillis, daylight: dayLight);
   }
 
-  static String getFirstTimeZoneByOffset(int offsetMillis, {bool dayLight = true}){
-    var list = _getTimezoneNames(offsetMillis, daylight: dayLight);
+  static String getFirstTimeZoneByOffset(int offsetMillis){
+    final list = _getTimezoneNames(offsetMillis);
+    // tehran|kabul is same
+    return list[0];
+  }
 
+  static String getFirstTimeZoneByOffsetDayLight(int offsetMillis, bool dayLight){
+    final list = _getTimezoneNames(offsetMillis, daylight: dayLight);
     // tehran|kabul is same
     return list[0];
   }
@@ -75,7 +88,7 @@ class TimeZone {
     final offsetMillLocal = localNow.timeZoneOffset.inMilliseconds;
     var utc = DateTime.fromMillisecondsSinceEpoch(localNow.millisecondsSinceEpoch - offsetMillLocal);
 
-    var offsetMillTz = getOffsetAsMillis(timezone, dayLight: dayLight);
+    var offsetMillTz = getOffsetAsMillisByDayLight(timezone, dayLight);
     utc = utc.add(Duration(milliseconds: offsetMillTz));
 
     return utc;

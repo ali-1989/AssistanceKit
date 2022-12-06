@@ -8,7 +8,7 @@ class Logger {
   static Logger? _staticLogger;
   final String _dirPath;
   final String _fileName;
-  late Isolate _isolate;
+  //late Isolate _isolate;
   SendPort? _sendPort;
   late Completer<bool> _completer;
 
@@ -43,15 +43,15 @@ class Logger {
   }
 
   void logToFile(dynamic text, {String type = ''}){
-    _sendPort?.send(['▄$type', text.toString()]);
+    _sendPort?.send(['LOGGER▄$type', text.toString()]);
   }
 
   void logToScreen(dynamic text, {String type = ''}){
     if(type.isNotEmpty) {
-      print('▄[$type]: ${text.toString()}');
+      print('LOGGER▄[$type]: ${text.toString()}');
     }
     else {
-      print('▄$text');
+      print('LOGGER▄$text');
     }
   }
 

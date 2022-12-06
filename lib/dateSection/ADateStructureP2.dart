@@ -24,17 +24,18 @@ class SolarHijriDate extends ADateStructure {
     _setValue(solarHijriDateValue);
   }
 
-  SolarHijriDate.from(DateTime systemDate, {bool isLocal = true}) {
-    var days = _convertDateTimeToDays(systemDate);
-    var date = _convertGregorianDaysToSolar(days).getValue();
+  SolarHijriDate.from(DateTime systemDate) {
+    final days = _convertDateTimeToDays(systemDate);
+    final date = _convertGregorianDaysToSolar(days).getValue();
     _setValue(date);
+
     changeTime(systemDate.hour, systemDate.minute, systemDate.second, systemDate.microsecond);
 
-    _timeZone = 'utc';
+    /*_timeZone = 'utc';
 
     if(!isLocal){
       moveUtcToLocal();
-    }
+    }*/
   }
 
   SolarHijriDate.parse(String solarHijriDate) {
@@ -43,7 +44,7 @@ class SolarHijriDate extends ADateStructure {
 
   void _init(int year, int month, int day, int hrs, int min, int sec, int millSec) {
     if (year == 0 || month < 1 || month > 12 || day < 1 || day > 31 || hrs < 0 || hrs > 23 || min < 0 || min > 59 || sec < 0 || sec > 59 || millSec < 0 || millSec > 999) {
-      throw ArgumentError('Err: Parameters for SolarHijriDate() is invalid. (Y/M/D ,' + year.toString() + '/' + month.toString() + '/' + day.toString() + ' ' + hrs.toString() + ':' + min.toString() + ':' + sec.toString() + '). ');
+      throw ArgumentError('Err: Parameters for SolarHijriDate() is invalid. (Y/M/D ,$year/$month/$day $hrs:$min:$sec). ');
     }
 
     if (month > 6 && day > 30) {
@@ -51,7 +52,7 @@ class SolarHijriDate extends ADateStructure {
     }
 
     if (month == 12 && day == 30 && !isSolarLeapYear(year)) {
-      throw ArgumentError('Err: parameters for SolarHijriDate() is invalid. Year (' + year.toString() + ') is not the leap. ');
+      throw ArgumentError('Err: parameters for SolarHijriDate() is invalid. Year ($year) is not the leap. ');
     }
 
     if (year > 0) {
@@ -139,20 +140,7 @@ class SolarHijriDate extends ADateStructure {
 
   @override
   bool getDaylightState() {
-    return _useDST;// && isAtDaylightRange();
-  }
-
-  @override
-  bool isAtDaylightRange() {
-    final month = getMonth(), day = getDay(), hour = hoursOfToday();
-
-    if ((month < 6 && month > 1) ||
-        (month == 6 && day < 31) ||
-        (month == 1 && ((day > 2) || (day == 2 && hour > 0)))) {
-      return true;
-    }
-
-    return false;
+    return useDST() && isAtDaylightRange();
   }
 
   @override
@@ -172,7 +160,7 @@ class SolarHijriDate extends ADateStructure {
     var days = ADateStructure._getDateSection(_value!);
 
     if ((days > 913200)) {
-      throw ArgumentError('Err: this date is bigger than 2500 years  [it is ' + days.toString() + ' days now]. ');
+      throw ArgumentError('Err: this date is bigger than 2500 years  [it is $days days now]. ');
     }
   }
 
@@ -316,7 +304,7 @@ class SolarHijriDate extends ADateStructure {
 
   @override
   DateTime convertToSystemDate() {
-    var ge = convertToGregorian();
+    final ge = convertToGregorian();
     return DateTime(ge[0], ge[1], ge[2], hoursOfToday(), minutesOfToday(), secondsOfToday(), milliSecondsOfToday());
   }
 
@@ -499,8 +487,8 @@ class SolarHijriDate extends ADateStructure {
   }
 
   @override
-  SolarHijriDate parse(String solarHijriDate) {
-    return parseFrom(solarHijriDate);
+  SolarHijriDate parse(String date) {
+    return parseFrom(date);
   }
 
   @override
@@ -511,8 +499,8 @@ class SolarHijriDate extends ADateStructure {
   }
 
   @override
-  String getLatinWeekDayNameAs(int d) {
-    return weekDayNameInLatin[d - 1];
+  String getLatinWeekDayNameAs(int day) {
+    return weekDayNameInLatin[day - 1];
   }
 
   @override
@@ -521,8 +509,8 @@ class SolarHijriDate extends ADateStructure {
   }
 
   @override
-  String getLatinWeekDayShortName(int d) {
-    return subStringByRegex(getLatinWeekDayNameAs(d), r'^(.*?)(\\s.*|$)', 1);
+  String getLatinWeekDayShortName(int day) {
+    return subStringByRegex(getLatinWeekDayNameAs(day), r'^(.*?)(\\s.*|$)', 1);
   }
 
   @override
@@ -536,8 +524,8 @@ class SolarHijriDate extends ADateStructure {
   }
 
   @override
-  String getLocalWeekDayShortName(int wd, String lang) {
-    return getLocalWeekDayName(wd, lang).substring(0, 3);
+  String getLocalWeekDayShortName(int day, String lang) {
+    return getLocalWeekDayName(day, lang).substring(0, 3);
   }
 
   @override

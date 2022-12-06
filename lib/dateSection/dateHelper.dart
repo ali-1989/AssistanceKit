@@ -233,6 +233,10 @@ class DateHelper {
 		return formatDate(dt, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss]);
 	}
 
+	static bool isToday(DateTime date, {bool utc = false}){
+		return isSameYmd(date,utc? getNowToUtc(): getNow());
+	}
+
 	static bool isSameY(DateTime d1, DateTime d2){
 		return d1.year == d2.year;
 	}
@@ -243,10 +247,6 @@ class DateHelper {
 
 	static bool isSameYmd(DateTime d1, DateTime d2){
 		return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
-	}
-
-	static bool isToday(DateTime date, {bool utc = false}){
-		return isSameYmd(date,utc? getNowToUtc(): getNow());
 	}
 
 	static bool isBiggerY(DateTime main, DateTime d2){
@@ -306,6 +306,26 @@ class DateHelper {
 		final today = DateHelper.getNowToUtc();
 
 		return today.difference(d).inDays;
+	}
+
+	static bool isPastOf(DateTime? date, Duration dur){
+		if(date == null){
+			return true;
+		}
+
+		final future = date.add(dur);
+
+		return DateTime.now().compareTo(future) > 0;
+	}
+
+	static bool isPastOfOrSame(DateTime? date, Duration dur){
+		if(date == null){
+			return true;
+		}
+
+		final future = date.add(dur);
+
+		return DateTime.now().compareTo(future) > -1;
 	}
 
 	static int compareDatesTs(String? d1, String? d2, {bool asc = true}){

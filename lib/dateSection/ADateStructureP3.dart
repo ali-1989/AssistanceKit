@@ -124,18 +124,7 @@ class LunarHijriDate extends ADateStructure {
 
   @override
   bool getDaylightState() {
-    return _useDST; //isAtDaylightRange();
-  }
-
-  @override
-  bool isAtDaylightRange() {
-    int month = getMonth(), day = getDay(), hour = hoursOfToday();
-
-    if ((month < 7 && month > 1) || (month == 1 && ((day > 2) || (day == 2 && hour > 0)))) {
-      return true;
-    }
-
-    return false;
+    return useDST() && isAtDaylightRange();
   }
 
   @override

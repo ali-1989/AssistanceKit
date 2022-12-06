@@ -137,22 +137,7 @@ class GregorianDate extends ADateStructure {
 
   @override
   bool getDaylightState() {
-    return _useDST;// && isAtDaylightRange();
-  }
-
-  @override
-  bool isAtDaylightRange() {
-    final month = getMonth(),
-        day = getDay(),
-        hour = hoursOfToday();
-
-    if ((month < 9 && month > 3)
-        || (month == 3 && ((day > 22) || (day == 22 && hour > 0)))
-        || (month == 9 && ((day < 22) ))) {
-      return true;
-    }
-
-    return false;
+    return useDST() && isAtDaylightRange();
   }
 
   @override

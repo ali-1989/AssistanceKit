@@ -464,7 +464,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<List?> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
+  Future<List<Row>?> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
@@ -492,7 +492,7 @@ class Psql2 {
   }
 
   // UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
-  Future<List?> updateReturning(String tbName, String setStatement, String? where, String returning) async{
+  Future<List<Row>?> updateReturning(String tbName, String setStatement, String? where, String returning) async{
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where RETURNING $returning;';
@@ -550,7 +550,7 @@ class Psql2 {
   }
 
   /// note: column name must be lowercase
-  Future<dynamic> getColumn(String querySt, String columnName) async {
+  Future<T?> getColumn<T>(String querySt, String columnName) async {
     final cursor = await queryCall(querySt);
 
     if (cursor == null || cursor.isEmpty) {
@@ -558,22 +558,33 @@ class Psql2 {
     }
 
     final m = cursor.elementAt(0).toMap();
-    return m[columnName];
+    return m[columnName] as T?;
+  }
+
+  /// SELECT id FROM tb WHERE parent_id = 10;
+  Future<List<T>?> getColumnAsList<T>(String querySt, String columnName) async {
+    final cursor = await queryCall(querySt);
+
+    if (cursor == null || cursor.isEmpty) {
+      return null;
+    }
+
+    return cursor.map((e) => e.toMap()[columnName] as T).toList();
   }
 
   // return int or 'RETURNING' value
-  Future delete(String tbName, String? where, {String? returning}) async {
+  Future<int?> delete(String tbName, String? where) async {
     where ??= '1 = 1';
 
-    var query = 'DELETE FROM $tbName WHERE $where';
+    final query = 'DELETE FROM $tbName WHERE $where;';
+    return execution(query);
+  }
 
-    if(returning == null) {
-      return execution(query + ';');
-    }
-    else {
-      query += ' RETURNING $returning;';
-      return queryCall(query);
-    }
+  Future<List<Row>?> deleteReturning(String tbName, String? where, {required String? returning}) async {
+    where ??= '1 = 1';
+
+    final query = 'DELETE FROM $tbName WHERE $where RETURNING $returning;';
+    return queryCall(query);
   }
 
   Future<int?> deleteByAt(String tbName, String? where, Map<String, dynamic> values) async{
