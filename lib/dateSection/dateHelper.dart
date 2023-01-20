@@ -249,20 +249,28 @@ class DateHelper {
 		return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
 	}
 
-	static bool isBiggerY(DateTime main, DateTime d2){
-		return main.year > d2.year;
+	static bool isBiggerYear(DateTime mustBig, DateTime base){
+		return mustBig.year > base.year;
 	}
 
-	static bool isLittleY(DateTime main, DateTime d2){
-		return main.year < d2.year;
+	static bool isLittleYear(DateTime mustLittle, DateTime base){
+		return mustLittle.year < base.year;
 	}
 
-	static bool isBiggerM(DateTime d1, DateTime d2){
-		return d1.year == d2.year && d1.month > d2.month;
+	static bool isBiggerMonth(DateTime mustBig, DateTime base){
+		return mustBig.year > base.year || mustBig.year == base.year && mustBig.month > base.month;
 	}
 
-	static bool isLittleM(DateTime main, DateTime d2){
-		return main.year == d2.year && main.month < d2.month;
+	static bool isBiggerEqualMonth(DateTime mustBig, DateTime base){
+		return mustBig.year > base.year || mustBig.year == base.year && mustBig.month >= base.month;
+	}
+
+	static bool isLittleMonth(DateTime mustLittle, DateTime base){
+		return mustLittle.year < base.year || mustLittle.year == base.year && mustLittle.month < base.month;
+	}
+
+	static bool isLittleEqualMonth(DateTime mustLittle, DateTime base){
+		return mustLittle.year < base.year || mustLittle.year == base.year && mustLittle.month <= base.month;
 	}
 
 	static bool isBetweenYmd(DateTime ts, DateTime date1, DateTime date2){

@@ -25,7 +25,7 @@ class Logger {
 
     var f = Isolate.spawn<IsolateData>(isoHandler, msg);
     f.then((iso) {
-      _isolate = iso;
+      //_isolate = iso;
 
       receiver.first.then((port){
         _sendPort = port;
@@ -43,15 +43,15 @@ class Logger {
   }
 
   void logToFile(dynamic text, {String type = ''}){
-    _sendPort?.send(['LOGGER▄$type', text.toString()]);
+    _sendPort?.send(['◄LOGGER►$type', text.toString()]);
   }
 
   void logToScreen(dynamic text, {String type = ''}){
     if(type.isNotEmpty) {
-      print('LOGGER▄[$type]: ${text.toString()}');
+      print('◄LOGGER►[$type]: ${text.toString()}');
     }
     else {
-      print('LOGGER▄$text');
+      print('◄LOGGER►$text');
     }
   }
 

@@ -19,7 +19,11 @@ class JsonHelper {
         }
       }
 
-      final dynamic result = json.decode(inp);
+      var result = json.decode(inp);
+
+      if(result is! Map) {
+        result = json.decode(result);
+      }
 
       if(result is! Map) {
         return null;
@@ -185,7 +189,7 @@ class JsonHelper {
     }
   }
 
-  static Map? removeNulls(Map? inp) {
+  static Map<K, V>? removeNulls<K, V>(Map<K, V>? inp) {
     if(inp == null){
       return null;
     }

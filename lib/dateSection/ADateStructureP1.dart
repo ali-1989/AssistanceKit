@@ -1,8 +1,8 @@
 part of 'ADateStructure.dart';
 
 class GregorianDate extends ADateStructure {
-  static final List<String> monthNameInLatin = ['',
-    'January', 'February', 'March',
+  static final List<String> monthNameInLatin = [
+   '0', 'January', 'February', 'March',
     'April', 'May', 'June',
     'July', 'August', 'September',
     'October', 'November', 'December'
@@ -392,8 +392,8 @@ class GregorianDate extends ADateStructure {
   }
 
   @override
-  String getLocalWeekDayShortName(int d, String lang) {
-    return getLatinWeekDayNameAs(d).substring(0, 3).toUpperCase();
+  String getLocalWeekDayShortName(int day, String lang) {
+    return getLatinWeekDayNameAs(day).substring(0, 3).toUpperCase();
   }
 
   @override
@@ -403,17 +403,17 @@ class GregorianDate extends ADateStructure {
 
   @override
   String getLatinMonthName() {
-    return monthNameInLatin[getMonth() - 1];
+    return monthNameInLatin[getMonth()];
   }
 
   @override
   String getMonthName() {
-    return monthNameInLatin[getMonth() - 1];
+    return monthNameInLatin[getMonth()]; //  no need: - 1
   }
 
   @override
   String getLocalMonthName(int m, String lang) {
-    return monthNameInLatin[m-1];
+    return monthNameInLatin[m];
   }
 
   @override

@@ -38,6 +38,11 @@ class TimeZone {
 
   static String getFirstTimeZoneByOffsetDayLight(int offsetMillis, bool dayLight){
     final list = _getTimezoneNames(offsetMillis, daylight: dayLight);
+
+    if(list.isEmpty){
+      return  '-tz null-';
+    }
+
     // tehran|kabul is same
     return list[0];
   }

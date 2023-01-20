@@ -372,6 +372,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
     return dl;
   }
+
   void changeTimezone(String tz){
     _timeZone = tz;
   }
@@ -538,7 +539,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
   }*/
 
   void moveUtcToLocal<T extends ADateStructure>() {
-    final temp = DateTime.now();
+    final temp = convertToSystemDate();//DateTime.now();
     final localOffset = temp.timeZoneOffset.inMilliseconds;
 
     if (_getTimeZoneOffset() == localOffset) {

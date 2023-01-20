@@ -5,7 +5,8 @@ import 'package:convert/convert.dart';
 
 class Generator {
   static final _random = Random();
-
+  static final List<String> _words = [];
+  
   Generator._();
 
   static String generateMd5(String input) {
@@ -92,6 +93,58 @@ class Generator {
     final idx = _random.nextInt(len);
 
     return list[idx];
+  }
+
+  static String generateWords(int wordCount, int minWordLen, int maxWordLean){
+    if(_words.isEmpty) {
+      _words.add('hi');
+      _words.add('hello');
+      _words.add('and');
+      _words.add('a');
+      _words.add('an');
+      _words.add('is');
+      _words.add('was');
+      _words.add('has');
+      _words.add('the');
+      _words.add('good');
+      _words.add('goodBy');
+      _words.add('good morning');
+      _words.add('what');
+      _words.add('not');
+      _words.add('same');
+      _words.add('some');
+      _words.add('where');
+      _words.add('*****');
+      _words.add('who');
+      _words.add('mr');
+      _words.add('miss');
+      _words.add('book');
+      _words.add('flower');
+      _words.add('computer');
+      _words.add('wallet');
+      _words.add('device');
+      _words.add('go');
+      _words.add('come');
+      _words.add('back');
+      _words.add('next');
+      _words.add('glass');
+      _words.add('dish');
+      _words.add('he');
+      _words.add('she');
+      _words.add('we');
+    }
+
+    List<String> res = [];
+
+    while(res.length < wordCount){
+      final w = _words[_random.nextInt(_words.length)];
+
+      if(w.length >= minWordLen && w.length <= maxWordLean) {
+        res.add(w);
+      }
+    }
+
+    return res.join(' ');
   }
 }
 ///==========================================================================================================

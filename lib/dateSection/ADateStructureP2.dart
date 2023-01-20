@@ -1,8 +1,16 @@
 part of 'ADateStructure.dart';
 
 class SolarHijriDate extends ADateStructure {
-  static final List<String> monthNameInLatin = ['', 'FARVARDIN', 'ORDIBEHESHT', 'KHORDAD', 'TIR', 'MORDAD', 'SHAHRIVAR', 'MEHR', 'ABAN', 'AZAR', 'DEY', 'BAHMAN', 'ESFAND'];
-  static final List<String> monthNameInPersian = ['', 'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+  static final List<String> monthNameInLatin = [
+    '', 'FARVARDIN', 'ORDIBEHESHT', 'KHORDAD',
+    'TIR', 'MORDAD', 'SHAHRIVAR',
+    'MEHR', 'ABAN', 'AZAR',
+    'DEY', 'BAHMAN', 'ESFAND'];
+  static final List<String> monthNameInPersian = [
+    '', 'فروردین', 'اردیبهشت', 'خرداد',
+    'تیر', 'مرداد', 'شهریور',
+    'مهر', 'آبان', 'آذر',
+    'دی', 'بهمن', 'اسفند'];
   static final List<String> weekDayNameInLatin = ['SHANBE', 'YEK SHANBE', 'DU SHANBE', 'SE SHANBE', 'CHAHAR SHANBE', 'PANJ SHANBE', 'JOME'];
   static final List<String> weekDayNameInPersian = ['شنبه', 'یک شنبه', 'دو شنبه', 'سه شنبه', 'چهار شنبه', 'پنج شنبه', 'جمعه'];
   static final List<int> solarMonths = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
