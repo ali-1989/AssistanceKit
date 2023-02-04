@@ -203,14 +203,14 @@ packages:
       name: postgres
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.4.6"
+    version: "2.5.2"
   postgresql2:
     dependency: "direct main"
     description:
       name: postgresql2
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.3"
+    version: "1.0.4"
   pub_semver:
     dependency: transitive
     description:
@@ -322,21 +322,21 @@ packages:
       name: test
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.21.4"
+    version: "1.22.2"
   test_api:
     dependency: transitive
     description:
       name: test_api
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.12"
+    version: "0.4.18"
   test_core:
     dependency: transitive
     description:
       name: test_core
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.16"
+    version: "0.4.22"
   typed_data:
     dependency: transitive
     description:
@@ -387,4 +387,4 @@ packages:
     source: hosted
     version: "3.1.1"
 sdks:
-  dart: ">=2.17.0 <3.0.0"
+  dart: ">=2.18.0 <3.0.0"

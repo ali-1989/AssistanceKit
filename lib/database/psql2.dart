@@ -24,11 +24,19 @@ class Psql2 {
     required String user,
     required String pass,
     int port = 5432,
+    String? server,
     bool pool = false,
     int minPool = 1,
     int maxPool = 10,
-    }) async{
-    final uri = 'postgres://$user:$pass@localhost:$port/$dbName';
+    }) async {
+    String uri;
+
+    if(server == null) {
+      uri = 'postgres://$user:$pass@localhost:$port/$dbName';
+    }
+    else {
+      uri = 'postgres://$user:$pass@$server:$port/$dbName';
+    }
 
     if(!pool) {
       _connection = await connect(uri, timeZone: 'UTC', connectionTimeout: Duration(seconds: 12), );
