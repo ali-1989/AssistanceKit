@@ -123,7 +123,7 @@ class Psql2 {
       return res;
     }
     catch (e){
-      Logger.L.logToAll('Database query: $e\n $query');
+      Logger.L.logToAll('[psql2] Database query: $e\n $query');
     }
 
     return Future.value(null);
@@ -186,7 +186,7 @@ class Psql2 {
       return res;
     }
     catch (e){
-      Logger.L.logToAll('Database execute: $e\n $query');
+      Logger.L.logToAll('[psql2] Database execute: $e\n $query');
       return null;
     }
   }

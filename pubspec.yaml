@@ -10,7 +10,7 @@ environment:
   sdk: '>=2.15.0'
 
 dependencies:
-  postgresql2: 1.0.4                         # old:1.0.3, Edited, pool   {is Edited type_converter}
+  postgresql2: 1.0.3                         # old:1.0.3, Edited, pool   {is Edited type_converter}
   postgres: 2.5.2                            # transaction
   file: ^6.1.4
   http: ^0.13.5
