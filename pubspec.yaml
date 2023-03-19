@@ -2,12 +2,12 @@ name: assistance_kit
 description: tools package.
 # homepage: https://www.example.com
 
+version: 0.1.3
 publish_to: 'none'
 
-version: 0.1.2
 
 environment:
-  sdk: '>=2.15.0'
+  sdk: '>=2.17.0'
 
 dependencies:
   postgresql2: 1.0.3                         # Edited, pool   {is Edited type_converter}
