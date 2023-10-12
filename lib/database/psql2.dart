@@ -375,7 +375,7 @@ class Psql2 {
     return buffer.toString();
   }
 
-  Future<int?> insert(String tbName, List<String> columns, List<dynamic> values) async{
+  Future<int?> insert(String tbName, List<String> columns, List<dynamic> values) async {
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)});';
 
     return execution(query);
@@ -383,11 +383,11 @@ class Psql2 {
 
   ///  kv['alternatives'] = "'${PublicAccess.psql2.listToValue(alternatives)}'::text[]";
   ///  kv['properties'] = "'${JsonHelper.mapToJson(props)}'::jsonb";
-  Future<int?> insertKv(String tbName, Map<String, dynamic> setKv) async{
+  Future<int?> insertKv(String tbName, Map<String, dynamic> setKv) async {
     return insert(tbName, setKv.keys.toList(), setKv.values.toList());
   }
 
-  Future<List?> insertKvReturning(String tbName, Map<String, dynamic> setKv, String returnKey) async {
+  Future<List<Row>?> insertKvReturning(String tbName, Map<String, dynamic> setKv, String returnKey) async {
     final k = setKv.keys.toList();
     final v = setKv.values.toList();
 
@@ -414,7 +414,9 @@ class Psql2 {
     return execution(query);
   }
 
-  /// return 0 if fail
+  /**
+   * [return] is int or Row. if be fail return 0.
+   */
   Future<dynamic> insertIgnoreWhere(String tbName, Map<String, dynamic> kv, {required String where, String? returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
