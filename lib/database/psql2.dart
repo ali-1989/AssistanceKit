@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:assistance_kit/api/helpers/boolHelper.dart';
 import 'package:assistance_kit/api/logger/logger.dart';
 import 'package:postgresql2/pool.dart';
 import 'package:postgresql2/postgresql.dart';
@@ -103,29 +102,32 @@ class Psql2 {
 
   /// queryCall('select color from tb where id = @id', {'id': 5})
   /// queryCall('select color from tb where id in @list:array::text[]', ['10','20','30'])
-  Future<(List<Row>?, Exception?)> queryCall(String query, {dynamic values, bool autoClose = false}) async {
+  Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
-      return Future.value((null, Exception('psql is not prepared.')));
+      return PsqlResult().._exception = Exception('psql is not prepared.');
     }
+
+    final ret = PsqlResult();
 
     try {
       if (_pool == null) {
-        return (await _connection.query(query, values).toList(), null);
+        ret._rowResult = await _connection.query(query, values).toList();
       }
+      else {
+        final c = await _pool!.connect();
+        ret._rowResult = await c.query(query, values).toList();
 
-      final c = await _pool!.connect();
-      final res = await c.query(query, values).toList();
-
-      if (autoClose) {
-        c.close();
+        if (autoClose) {
+          c.close();
+        }
       }
-
-      return (res, null);
     }
     catch (e){
-      Logger.L.logToAll('[psql2] Database query: $e\n $query');
-      return Future.value((null, e as Exception));
+      Logger.L.logToAll('[psql2] Database query: $e\n\n on: $query\n');
+      ret._exception = e as Exception;
     }
+
+    return ret;
   }
 
   Future<Stream<Row>?> queryBigData(String query, {dynamic values}) async{
@@ -165,29 +167,32 @@ class Psql2 {
     return res;
   }
 
-  Future<(int?, Exception?)> execution(String query, {dynamic values, bool autoClose = false}) async{
+  Future<PsqlResult> execution(String query, {dynamic values, bool autoClose = false}) async{
     if(!_isPrepare) {
-      return Future.value((null, Exception('psql is not prepare.')));
+      return PsqlResult().._exception = Exception('psql is not prepare.');
     }
+
+    final ret = PsqlResult();
 
     try {
       if (_pool == null) {
-        return (await _connection.execute(query, values), null);
+        ret._intResult = await _connection.execute(query, values);
       }
+      else {
+        final c = await _pool!.connect();
+        ret._intResult = await c.execute(query, values);
 
-      final c = await _pool!.connect();
-      final res = await c.execute(query, values);
-
-      if (autoClose) {
-        c.close();
+        if (autoClose) {
+          c.close();
+        }
       }
-
-      return (res, null);
     }
     catch (e){
-      Logger.L.logToAll('[psql2] Database execute: $e\n $query');
-      return (null, e as Exception);
+      Logger.L.logToAll('[psql2] Database execute: $e\n\n on:$query\n');
+      ret._exception = e as Exception;
     }
+
+    return ret;
   }
 
   String _genUpdateSetStatement(List<String> columns, List<dynamic> values){
@@ -374,7 +379,7 @@ class Psql2 {
     return buffer.toString();
   }
 
-  Future<(int?, Exception?)> insert(String tbName, List<String> columns, List<dynamic> values) async {
+  Future<PsqlResult> insert(String tbName, List<String> columns, List<dynamic> values) async {
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)});';
 
     return execution(query);
@@ -382,11 +387,11 @@ class Psql2 {
 
   ///  kv['alternatives'] = "'${PublicAccess.psql2.listToValue(alternatives)}'::text[]";
   ///  kv['properties'] = "'${JsonHelper.mapToJson(props)}'::jsonb";
-  Future<(int?, Exception?)> insertKv(String tbName, Map<String, dynamic> setKv) async {
+  Future<PsqlResult> insertKv(String tbName, Map<String, dynamic> setKv) async {
     return insert(tbName, setKv.keys.toList(), setKv.values.toList());
   }
 
-  Future<(List<Row>?, Exception?)> insertKvReturning(String tbName, Map<String, dynamic> setKv, String returnKey) async {
+  Future<PsqlResult> insertKvReturning(String tbName, Map<String, dynamic> setKv, String returnKey) async {
     final k = setKv.keys.toList();
     final v = setKv.values.toList();
 
@@ -407,27 +412,28 @@ class Psql2 {
   /// conflictExp: ON CONSTRAINT constraint_name
   /// conflictExp: (ColumnNames)                   ColumnName must unique for conflict
   /// conflictExp: (ColumnNames) WHERE ...
-  Future<(int?, Exception?)> insertIgnore(String tbName, List<String> columns, List<dynamic> values, {String conflictExp = ''}) async{
+  Future<PsqlResult> insertIgnore(String tbName, List<String> columns, List<dynamic> values, {String conflictExp = ''}) async{
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
         ' ON CONFLICT $conflictExp DO NOTHING;';
     return execution(query);
   }
 
   /**
-   * [return] is int or Row. if be fail return 0.
+   * if be ignore, isExecuted is false.
    */
-  Future<(dynamic, Exception?)> insertIgnoreWhere(String tbName, Map<String, dynamic> kv, {required String where, String? returning}) async{
+  Future<PsqlResult> insertIgnoreWhere(String tbName, Map<String, dynamic> kv, {required String where, String? returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
     final r = await exist(tbName, where);
 
-    if(r.$2 != null){
-      return (null, r.$2);
+    if(r.hasError()){
+      return r;
     }
 
-    if(r.$1!){
-      return (0, null);
+    if(!r.exist()){
+      r._intResult = 0;
+      return r;
     }
 
     var q = 'INSERT INTO $tbName (${col.join(',')}) values(${_joinValue(val)}) ON CONFLICT DO NOTHING';
@@ -442,7 +448,7 @@ class Psql2 {
     }
   }
 
-  Future<(int?, Exception?)> insertByAt(String tbName, List<String> columns, Map<String, dynamic> values) async{
+  Future<PsqlResult> insertByAt(String tbName, List<String> columns, Map<String, dynamic> values) async{
     final a = values.keys.map((key) {return '@$key';}).toList();
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${a.join(',')});';
 
@@ -451,21 +457,21 @@ class Psql2 {
 
   /// setStatement: cName = EXCLUDED.cName
   /// setStatement: cName = 50
-  Future<(int?, Exception?)> upsert(String tbName, List<String> columns, List<dynamic> values,{
+  Future<PsqlResult> upsert(String tbName, List<String> columns, List<dynamic> values,{
     required String conflictColumns, required String setStatement}) async{
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
         ' ON CONFLICT ($conflictColumns) DO UPDATE set $setStatement;';
     return execution(query);
   }
 
-  Future<(int?, Exception?)> upsertWhere(String tbName, List<String> columns, List<dynamic> values,{required String where}) async{
+  Future<PsqlResult> upsertWhere(String tbName, List<String> columns, List<dynamic> values,{required String where}) async{
     final r = await exist(tbName, where);
 
-    if(r.$2 != null){
-      return (null, r.$2);
+    if(r.hasError()){
+      return r;
     }
 
-    if(r.$1!){
+    if(!r.exist()){
       return await update(tbName, _genUpdateSetStatement(columns, values), where);
     }
 
@@ -473,17 +479,17 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<(int?, Exception?)> upsertWhereKv(String tbName, Map<String, dynamic> kv, {required String where}) async{
+  Future<PsqlResult> upsertWhereKv(String tbName, Map<String, dynamic> kv, {required String where}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
     final r = await exist(tbName, where);
 
-    if(r.$2 != null){
-      return (null, r.$2);
+    if(r.hasError()){
+      return r;
     }
 
-    if(r.$1!){
+    if(r.exist()){
       return update(tbName, _genUpdateSetStatement(col, val), where);
     }
 
@@ -491,17 +497,17 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<(List<Row>?, Exception?)> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
+  Future<PsqlResult> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
     final r = await exist(tbName, where);
 
-    if(r.$2 != null){
-      return (null, r.$2);
+    if(r.hasError()){
+      return r;
     }
 
-    if(r.$1!){
+    if(r.exist()){
       return updateReturning(tbName, _genUpdateSetStatement(col, val), where, returning);
     }
 
@@ -509,7 +515,7 @@ class Psql2 {
     return queryCall(query);
   }
 
-  Future<(int?, Exception?)> upsertValues(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
+  Future<PsqlResult> upsertValues(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
     final set = _genUpdateSetStatement(columns, values);
 
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
@@ -517,7 +523,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<(int?, Exception?)> update(String tbName, String setStatement, String? where) async{
+  Future<PsqlResult> update(String tbName, String setStatement, String? where) async{
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';
@@ -525,14 +531,14 @@ class Psql2 {
   }
 
   // UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
-  Future<(List<Row>?, Exception?)> updateReturning(String tbName, String setStatement, String? where, String returning) async{
+  Future<PsqlResult> updateReturning(String tbName, String setStatement, String? where, String returning) async{
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where RETURNING $returning;';
     return queryCall(query);
   }
 
-  Future<(int?, Exception?)> updateByAt(String tbName, String setStatement, String? where, Map<String, dynamic> values) async{
+  Future<PsqlResult> updateByAt(String tbName, String setStatement, String? where, Map<String, dynamic> values) async{
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';
@@ -540,11 +546,11 @@ class Psql2 {
   }
 
   /// updateKv(DbNames.T_Users, value, ' userId = $userId')
-  Future<(int?, Exception?)> updateKv(String tbName, Map<String, dynamic> setKv, String? where) async{
+  Future<PsqlResult> updateKv(String tbName, Map<String, dynamic> setKv, String? where) async{
     return update(tbName, _genUpdateSetStatementKv(setKv), where);
   }
 
-  Future<(int?, Exception?)> updateKvByAt(String tbName, Map<String, dynamic> setKv, String? where) async{
+  Future<PsqlResult> updateKvByAt(String tbName, Map<String, dynamic> setKv, String? where) async{
     var set = '';
     for(final e in setKv.entries){
       set += '${e.key} = @${e.key},';
@@ -555,105 +561,87 @@ class Psql2 {
     return updateByAt(tbName, set, where, setKv);
   }
 
-  Future<(bool?, Exception?)> exist(String tbName, String whereCondition) async{
+  Future<PsqlResult> exist(String tbName, String whereCondition) async{
     final q = 'SELECT EXISTS (SELECT * FROM $tbName WHERE $whereCondition LIMIT 1);';
 
-    return queryCall(q).then((value) {
-      if(value.$2 != null){
-        return (null, value.$2);
-      }
+    final res = await queryCall(q);
 
-      if(value.$1 != null && value.$1!.isNotEmpty){
-        final bol = value.$1!.elementAt(0)[0];
+    if(res.hasError()){
+      return res;
+    }
 
-        return (BoolHelper.isTrue(bol), null);
-      }
+    if(res.rowsCount() < 1){
+      res._intResult = 0;
+    }
+    else {
+      //res._intResult = BoolHelper.isTrue(res._rowResult.first.toList().first) ? 1 : 0;
+      res._intResult = 1;
+    }
 
-      return (false, null);
-    });
+    return res;
   }
 
   // que: SELECT EXISTS (SELECT ...)
-  Future<(bool?, Exception?)> existQuery(String que) async{
-    return queryCall(que).then((value) {
-      if(value.$2 != null){
-        return (null, value.$2);
-      }
+  Future<PsqlResult> existQuery(String que) async{
+    final res = await queryCall(que);
 
-      if(value.$1 != null && value.$1!.isNotEmpty){
-        final res = value.$1!.elementAt(0)[0];
+    if(res.hasError()){
+      return res;
+    }
 
-        return (BoolHelper.isTrue(res), null);
-      }
+    res._intResult = res.rowsCount() > 0? 1 : 0;
 
-      return (false, null);
-    });
+    return res;
   }
 
   /// note: column name must be lowercase
-  Future<(T?, Exception?)> getColumn<T>(String querySt, String columnName) async {
+  Future<PsqlResult> getColumn<T>(String querySt, String columnName) async {
     final cursor = await queryCall(querySt);
 
-    if(cursor.$2 != null){
-      return (null, cursor.$2);
+    if(cursor.hasError() || cursor.rowsCount() < 1){
+      return cursor;
     }
 
-    if (cursor.$1 == null || cursor.$1!.isEmpty) {
-      return (null, null);
-    }
+    cursor._rowResult = [cursor.getFirstRow()[columnName]];
 
-    final m = cursor.$1!.elementAt(0).toMap();
-    return (m[columnName] as T?, null);
+    return cursor;
   }
 
   /// SELECT id FROM tb WHERE parent_id = 10;
-  Future<(List<T>, Exception?)> getColumnAsList<T>(String querySt, String columnName) async {
-    final cursor = await queryCall(querySt);
-
-    if (cursor.$2 != null) {
-      return (<T>[], cursor.$2);
-    }
-
-    if (cursor.$1 == null || cursor.$1!.isEmpty) {
-      return (<T>[], null);
-    }
-
-    return (cursor.$1!.map((e) => e.toMap()[columnName] as T).toList(), null);
-  }
 
   // return int or 'RETURNING' value
-  Future<(int?, Exception?)> delete(String tbName, String? where) async {
+  Future<PsqlResult> delete(String tbName, String? where) async {
     where ??= '1 = 1';
 
     final query = 'DELETE FROM $tbName WHERE $where;';
     return execution(query);
   }
 
-  Future<(List<Row>?, Exception?)> deleteReturning(String tbName, String? where, {required String? returning}) async {
+  Future<PsqlResult> deleteReturning(String tbName, String? where, {required String? returning}) async {
     where ??= '1 = 1';
 
     final query = 'DELETE FROM $tbName WHERE $where RETURNING $returning;';
     return queryCall(query);
   }
 
-  Future<(int?, Exception?)> deleteByAt(String tbName, String? where, Map<String, dynamic> values) async{
+  Future<PsqlResult> deleteByAt(String tbName, String? where, Map<String, dynamic> values) async{
     where ??= '1 = 1';
 
     final query = 'DELETE FROM $tbName WHERE $where;';
     return execution(query, values: values);
   }
 
-  Future<(int?, Exception?)> deleteTableCascade(String tbName) async{
+  Future<PsqlResult> deleteTableCascade(String tbName) async{
     final query = 'DROP TABLE IF EXISTS $tbName CASCADE;';
     return execution(query);
   }
 
-  Future<(int?, Exception?)> truncateTableCascade(String tbName) async{
+  Future<PsqlResult> truncateTableCascade(String tbName) async{
     final query = 'TRUNCATE TABLE $tbName RESTART IDENTITY CASCADE;';
     return execution(query);
   }
 
-  Future<(int?, Exception?)> dropAllTable() async{
+  Future<PsqlResult> dropAllTable() async{
     final query = '''
       DO \$\$
 			DECLARE tablenames text;
@@ -666,7 +654,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<(List<Row>?, Exception?)> getColumnName(String tableName) async{
+  Future<PsqlResult> getColumnName(String tableName) async{
     final query = '''
       SELECT column_name, data_type
       FROM information_schema.columns
@@ -770,5 +758,57 @@ class Psql2 {
     res = res.substring(0, res.length-2);
 
     return res;
+  }
+}
+///=============================================================================
+class PsqlResult {
+  Exception? _exception;
+  List<Row>? _rowResult;
+  int? _intResult;
+
+
+  bool hasError(){
+    return _exception != null;
+  }
+
+  Exception getError(){
+    return _exception!;
+  }
+
+  int rowsCount(){
+    if(_rowResult == null){
+      return 0;
+    }
+
+    return _rowResult!.length;
+  }
+
+  Map<String, dynamic> getFirstRow(){
+    return _rowResult!.first.toMap() as Map<String, dynamic>;
+  }
+
+  List<Map<String, dynamic>> getRows(){
+    final res = <Map<String, dynamic>>[];
+
+    for(final i in _rowResult!){
+      res.add(i.toMap() as Map<String, dynamic>);
+    }
+
+    return res;
+  }
+
+  /**
+   * this is for (Insert, Update)
+   */
+  bool isExecuted(){
+    return _intResult != null && _intResult! > 0;
+  }
+
+  bool exist(){
+    return isExecuted();
+  }
+
+  dynamic getReturnValue(){
+    return _rowResult!.first.toList().first;
   }
 }
