@@ -123,7 +123,7 @@ class Psql2 {
       }
     }
     catch (e){
-      Logger.L.logToAll('[psql2] Database query: $e\n\n on: $query\n');
+      Logger.L.logToAll('[psql2] error: $e\n====> query: $query\n');
       ret._exception = e as Exception;
     }
 
@@ -167,6 +167,7 @@ class Psql2 {
     return res;
   }
 
+  /// return 1 if correct doing and return 0 if not doing.
   Future<PsqlResult> execution(String query, {dynamic values, bool autoClose = false}) async{
     if(!_isPrepare) {
       return PsqlResult().._exception = Exception('psql is not prepare.');
@@ -188,7 +189,7 @@ class Psql2 {
       }
     }
     catch (e){
-      Logger.L.logToAll('[psql2] Database execute: $e\n\n on:$query\n');
+      Logger.L.logToAll('[psql2] error: $e\n====> query:$query\n');
       ret._exception = e as Exception;
     }
 
@@ -570,11 +571,10 @@ class Psql2 {
       return res;
     }
 
-    if(res.rowsCount() < 1){
+    if(res.rowsCount() < 1 || res.firstRow()['exists'] == false){
       res._intResult = 0;
     }
     else {
-      //res._intResult = BoolHelper.isTrue(res._rowResult.first.toList().first) ? 1 : 0;
       res._intResult = 1;
     }
 
@@ -582,7 +582,7 @@ class Psql2 {
   }
 
   // que: SELECT EXISTS (SELECT ...)
-  Future<PsqlResult> existQuery(String que) async{
+  Future<PsqlResult> existQuery(String que) async {
     final res = await queryCall(que);
 
     if(res.hasError()){
@@ -602,7 +602,7 @@ class Psql2 {
       return cursor;
     }
 
-    cursor._rowResult = [cursor.getFirstRow()[columnName]];
+    cursor._oneResult = cursor.firstRow()[columnName];
 
     return cursor;
   }
@@ -764,6 +764,7 @@ class Psql2 {
 class PsqlResult {
   Exception? _exception;
   List<Row>? _rowResult;
+  dynamic _oneResult;
   int? _intResult;
 
 
@@ -771,23 +772,31 @@ class PsqlResult {
     return _exception != null;
   }
 
+  bool hasErrorOrEmpty(){
+    return _exception != null || _rowResult == null || _rowResult!.isEmpty;
+  }
+
   Exception getError(){
     return _exception!;
   }
 
   int rowsCount(){
-    if(_rowResult == null){
+    if(_rowResult == null || hasError()){
       return 0;
     }
 
     return _rowResult!.length;
   }
 
-  Map<String, dynamic> getFirstRow(){
+  Map<String, dynamic> firstRow(){
+    if(_rowResult == null || _rowResult!.isEmpty){
+      return <String, dynamic>{};
+    }
+
     return _rowResult!.first.toMap() as Map<String, dynamic>;
   }
 
-  List<Map<String, dynamic>> getRows(){
+  List<Map<String, dynamic>> rows(){
     final res = <Map<String, dynamic>>[];
 
     for(final i in _rowResult!){
@@ -798,17 +807,21 @@ class PsqlResult {
   }
 
   /**
-   * this is for (Insert, Update)
+   * this is for (Insert, Update, Delete), if doing return 1.
    */
   bool isExecuted(){
-    return _intResult != null && _intResult! > 0;
+    return !hasError() && _intResult != null && _intResult! > 0;
   }
 
   bool exist(){
     return isExecuted();
   }
 
-  dynamic getReturnValue(){
+  dynamic returnValue(){
     return _rowResult!.first.toList().first;
+  }
+
+  dynamic columnValue(){
+    return _oneResult;
   }
 }
