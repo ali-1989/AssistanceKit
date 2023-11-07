@@ -821,7 +821,7 @@ class PsqlResult {
     return _rowResult!.first.toList().first;
   }
 
-  dynamic columnValue(){
-    return _oneResult;
+  T columnValue<T>(){
+    return _oneResult as T;
   }
 }

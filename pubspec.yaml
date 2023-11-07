@@ -2,7 +2,7 @@ name: assistance_kit
 description: tools package.
 # homepage: https://www.example.com
 
-version: 0.1.6
+version: 0.1.7
 publish_to: 'none'
 
 
@@ -16,4 +16,5 @@ dependencies:
   http: ^1.1.0
 
 dev_dependencies:
-  test: ^1.24.7
+  test: any
+  lint: any
