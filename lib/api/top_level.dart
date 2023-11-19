@@ -33,5 +33,17 @@ T? reType<T>(dynamic value){
     }
   }
 
+  if(T.runtimeType is bool){
+    if(value is num){
+      return (value != 0) as T;
+    }
+
+    if(value is String){
+      final b = value.toString();
+
+      return (b == 'true') as T;
+    }
+  }
+
   return null;
 }

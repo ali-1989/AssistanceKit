@@ -472,11 +472,12 @@ class Psql2 {
       return r;
     }
 
-    if(!r.exist()){
+    if(r.exist()){
       return await update(tbName, _genUpdateSetStatement(columns, values), where);
     }
 
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) ON CONFLICT DO NOTHING;';
+
     return execution(query);
   }
 
@@ -528,6 +529,7 @@ class Psql2 {
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';
+    
     return execution(query);
   }
 
@@ -776,8 +778,8 @@ class PsqlResult {
     return _exception != null || _rowResult == null || _rowResult!.isEmpty;
   }
 
-  Exception getError(){
-    return _exception!;
+  Exception? getError(){
+    return _exception;
   }
 
   int rowsCount(){
