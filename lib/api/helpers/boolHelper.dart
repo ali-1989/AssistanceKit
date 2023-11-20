@@ -23,7 +23,7 @@ class BoolHelper{
       return item != 0;
     }
 
-    item = item.toLowerCase();
+    item = item.toString().toLowerCase();
     return item == 'true' || item == 't' || item == 'yes' || item == '1';
   }
 

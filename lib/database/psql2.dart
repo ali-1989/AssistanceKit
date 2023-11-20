@@ -245,53 +245,58 @@ class Psql2 {
     return set.substring(0, set.length-2);
   }
 
-  String _genUpdateSetStatementKv(Map<String, dynamic> setKv){
+  String _genUpdateSetStatementKv(Map<String, dynamic> setKv, {bool concatJson = false}){
     if(setKv.isEmpty) {
       return '';
     }
 
-    var set = '';
+    var result = '';
 
-    for(var e in setKv.entries){
+    for(final e in setKv.entries){
       final key = e.key;
       final val = e.value;
 
       if(val == null){
-        set += '$key = null,';
+        result += '$key = null,';
       }
 
       else if(val is String) {
         if(val.contains(_regCls)) {
-          set += '$key = $val,';
+          result += '$key = $val,';
         }
         else {
-          set += "$key = '$val',";
+          result += "$key = '$val',";
         }
       }
       else {
         if(val is List){
           if(val is List<int>){
-            set += "$key = '{${listToSequenceNum(val, onEmpty: '')}}'::int[], ";
+            result += "$key = '{${listToSequenceNum(val, onEmpty: '')}}'::int[], ";
           }
           else if(val is List<Map>){
-            set += "$key = '${listToPgArrayWithoutClass(val)}'::JSONB, ";
+            result += "$key = '${listToPgArrayWithoutClass(val)}'::JSONB, ";
           }
         }
         else if(val is Map){
           if(val.isEmpty){
-            set += "$key = '{}'::JSONB, ";
+            result += "$key = '{}'::JSONB, ";
           }
           else {
-            set += "$key = '${json.encode(val)}'::JSONB, ";
+            if(concatJson) {
+              result += "$key = jsonb_concat($key, '${json.encode(val)}'::JSONB), ";
+            }
+            else {
+              result += "$key = '${json.encode(val)}'::JSONB, ";
+            }
           }
         }
         else {
-          set += '$key = $val,';
+          result += '$key = $val,';
         }
       }
     }
 
-    return set.substring(0, set.length-1);
+    return result.substring(0, result.length-2);
   }
 
   String _joinValue(List list) {
@@ -549,8 +554,8 @@ class Psql2 {
   }
 
   /// updateKv(DbNames.T_Users, value, ' userId = $userId')
-  Future<PsqlResult> updateKv(String tbName, Map<String, dynamic> setKv, String? where) async{
-    return update(tbName, _genUpdateSetStatementKv(setKv), where);
+  Future<PsqlResult> updateKv(String tbName, Map<String, dynamic> setKv, String? where, {bool concatJson = false}) async{
+    return update(tbName, _genUpdateSetStatementKv(setKv, concatJson: concatJson), where);
   }
 
   Future<PsqlResult> updateKvByAt(String tbName, Map<String, dynamic> setKv, String? where) async{
