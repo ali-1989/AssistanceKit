@@ -67,8 +67,8 @@ class MathHelper {
 		return max(a, b);
 	}
 
-	static double minDouble(double a, double b){
-		return min(a, b);
+	static double minDouble(double? a, double? b){
+		return min(a?? 0, b?? 0);
 	}
 
 	static double maxDouble(double a, double b){
@@ -76,16 +76,23 @@ class MathHelper {
 	}
 
 	static double percent(double whole, int per){
-		return per * 100 / whole;
+		return per * whole / 100; // 25% of 500 => [25 * 500 / 100] = 12500/100 = 125    (4 * 125 = 500)
 	}
 
-	static double percentFix(double whole, int per){
-		final res = per * 100 / whole;
-		return fixPrecisionRound(res, 1);
+	static double whatPercent(double whole, int num){
+		return num * 100 / whole; // 125 of 500 => [125 * 100 / 500] = 12500/800 = 25%
+	}
+
+	static double percentFixPrecision(double whole, int per){
+		return fixPrecisionRound(percent(whole, per), 1);
 	}
 
 	static int percentInt(int whole, int per){
-		return per * 100 ~/ whole;
+		return per * whole ~/ 100; //  40% of 200x => 40*200/100 = 80        1402/02/17
+	}
+
+	static int whatPercentInt(int whole, int num){
+		return num * 100 ~/ whole;
 	}
 
 	static double degreesToRadian(double deg) {
@@ -221,5 +228,44 @@ class MathHelper {
 			r = def + allCount;
 			return r % allCount;
 		}
+	}
+
+	static double between(double maxReturn, double maxRang, double minReturn, double minRang, double num, {bool symmetry = false}){
+		if(symmetry){
+			double temp = maxReturn;
+			maxReturn = minReturn;
+			minReturn = temp;
+		}
+
+		if(num >= maxRang){
+			return maxReturn;
+		}
+
+		if(num <= minRang){
+			return minReturn;
+		}
+
+		double difResult = maxReturn - minReturn;
+		double difRange = maxRang - minRang;
+
+		double percent = 100 * (num - minRang) / difRange;
+		double wPer = difResult * percent / 100;
+		double res = wPer + minReturn;
+
+		return res;
+	}
+
+	/// relativeOf(10, 10, 1, 0.1)  $return : 1
+	/// relativeOf(20, 10, 1, 0.1)  $return : 2
+	/// relativeOf(620, 570, 10, 0.1)  $return : 1.5
+	static double relativeOf(double num, double minNum, double numStep, double unitStep){
+		if(num <= minNum){
+			return 1.0;
+		}
+
+		final dif = num - minNum;
+		final c = dif / numStep;
+
+		return 1 + c * unitStep;
 	}
 }

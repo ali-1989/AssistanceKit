@@ -98,7 +98,7 @@ class Converter {
     return val.toString();
   }
 
-  ///-------------------------------------------------------------------------------------------------------------
+  ///---------------------------------------------------------------------------
   static String? millsToTime(dynamic input, {withSec = true, withMill = false}) {
     if (input == null) {
       return null;
@@ -170,24 +170,54 @@ class Converter {
     }
   }
 
-  static T correctType<T>(dynamic inp, T sample){
-    if(sample is int){
-      return int.tryParse(inp.toString()) as T;
+  static bool isSameType(Type t1, Type t2){
+    return t1.hashCode == t2.hashCode;
+    // T.hashCode == ((int).hashCode)
+  }
+
+  static T? correctType<T>(dynamic input){
+    if(input == null){
+      return null;
     }
 
-    if(sample is double){
-      return double.tryParse(inp.toString()) as T;
+    if(input.runtimeType == T){
+      return input as T;
     }
 
-    if(sample is bool){
-      return BoolHelper.itemToBool(inp) as T;
+    if(isSameType(T, String)){
+      // bool, int, double,
+      return input.toString() as T;
     }
 
-    if(sample is String){
-      return inp.toString() as T;
+    if(isSameType(T, int)){
+      if(input is num){
+        return input.toInt() as T;
+      }
+
+      if(input is bool){
+        return (input == true? 1 : 0) as T;
+      }
+
+      return int.tryParse(input.toString()) as T;
     }
 
-    return inp;
+    if(isSameType(T, double)){
+      if(input is num){
+        return input.toDouble() as T;
+      }
+
+      if(input is bool){
+        return (input == true? 1.0 : 0.0) as T;
+      }
+
+      return double.tryParse(input.toString()) as T;
+    }
+
+    if(isSameType(T, bool)){
+      return BoolHelper.itemToBool(input) as T;
+    }
+
+    return null;
   }
 
   // List<int>? allIdsMap = Converter.correctList<int>(js['all_ticket_ids']);

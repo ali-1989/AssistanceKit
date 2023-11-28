@@ -37,7 +37,7 @@ class TextToColor {
       gg = gg.padLeft(2, '8');
       bb = bb.padLeft(2, '9');
 
-      var x = '0xFF' + rr.substring(rr.length - 2) + gg.substring(gg.length - 2) + bb.substring(bb.length - 2);
+      var x = '0xFF${rr.substring(rr.length - 2)}${gg.substring(gg.length - 2)}${bb.substring(bb.length - 2)}';
       return int.parse(x);
     }
     catch (err) {

@@ -9,12 +9,12 @@ class Generator {
   
   Generator._();
 
-  static String generateMd5(String input) {
-    return crypto.md5.convert(utf8.encode(input)).toString();
-  }
-
   static int hash(String p1, List<String> p) {
     return 0;//'to-do'
+  }
+
+  static String generateMd5(String input) {
+    return crypto.md5.convert(utf8.encode(input)).toString();
   }
 
   static String hashMd5(String data) {
@@ -47,6 +47,10 @@ class Generator {
     }
 
     return res;
+  }
+
+  static bool randomBool(){
+    return _random.nextBool();
   }
 
   static int generateIntId(int len){

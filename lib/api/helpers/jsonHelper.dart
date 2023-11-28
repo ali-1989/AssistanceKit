@@ -127,6 +127,7 @@ class JsonHelper {
     }
 
     final res = clone(src);
+    //final res = Clone.cloneShallow(src);
 
     res[key] = value;
     return res;
