@@ -100,8 +100,8 @@ class Psql2 {
     return firstRow.toMap()[columnName];
   }
 
-  /// queryCall('select color from tb where id = @id', {'id': 5})
-  /// queryCall('select color from tb where id in @list:array::text[]', ['10','20','30'])
+  /// values: queryCall('select color from tb where id = @id',  values : {'id': 5})
+  /// values: queryCall('select color from tb where id in @list:array::text[]',  values: ['10','20','30'])
   Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
       return PsqlResult().._exception = Exception('psql is not prepared.');
@@ -271,22 +271,22 @@ class Psql2 {
       else {
         if(val is List){
           if(val is List<int>){
-            result += "$key = '{${listToSequenceNum(val, onEmpty: '')}}'::int[], ";
+            result += "$key = '{${listToSequenceNum(val, onEmpty: '')}}'::int[],";
           }
           else if(val is List<Map>){
-            result += "$key = '${listToPgArrayWithoutClass(val)}'::JSONB, ";
+            result += "$key = '${listToPgArrayWithoutClass(val)}'::JSONB,";
           }
         }
         else if(val is Map){
           if(val.isEmpty){
-            result += "$key = '{}'::JSONB, ";
+            result += "$key = '{}'::JSONB,";
           }
           else {
             if(concatJson) {
-              result += "$key = jsonb_concat($key, '${json.encode(val)}'::JSONB), ";
+              result += "$key = jsonb_concat($key, '${json.encode(val)}'::JSONB),";
             }
             else {
-              result += "$key = '${json.encode(val)}'::JSONB, ";
+              result += "$key = '${json.encode(val)}'::JSONB,";
             }
           }
         }
@@ -296,7 +296,7 @@ class Psql2 {
       }
     }
 
-    return result.substring(0, result.length-2);
+    return result.substring(0, result.length-1);
   }
 
   String _joinValue(List list) {
@@ -661,7 +661,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<PsqlResult> getColumnName(String tableName) async{
+  Future<PsqlResult> getColumnNames(String tableName) async{
     final query = '''
       SELECT column_name, data_type
       FROM information_schema.columns

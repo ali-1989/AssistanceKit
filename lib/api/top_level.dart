@@ -1,5 +1,10 @@
 import 'package:assistance_kit/api/helpers/boolHelper.dart';
 
+bool isSameType(Type t1, Type t2){
+  return t1.hashCode == t2.hashCode;
+  // T.hashCode == ((int).hashCode)
+}
+
 T? reType<T>(dynamic input){
   if(input == null){
     return null;
@@ -8,13 +13,13 @@ T? reType<T>(dynamic input){
   if(input.runtimeType == T){
     return input as T;
   }
-
-  if(T is String){
+  
+  if(isSameType(T, String)){
     // bool, int, double,
     return input.toString() as T;
   }
 
-  if(T is int){
+  if(isSameType(T, int)){
     if(input is num){
       return input.toInt() as T;
     }
@@ -22,11 +27,11 @@ T? reType<T>(dynamic input){
     if(input is bool){
       return (input == true? 1 : 0) as T;
     }
-
+    
     return int.tryParse(input.toString()) as T;
   }
 
-  if(T is double){
+  if(isSameType(T, double)){
     if(input is num){
       return input.toDouble() as T;
     }
@@ -38,7 +43,7 @@ T? reType<T>(dynamic input){
     return double.tryParse(input.toString()) as T;
   }
 
-  if(T is bool){
+  if(isSameType(T, bool)){
     return BoolHelper.itemToBool(input) as T;
   }
 
