@@ -100,8 +100,8 @@ class Psql2 {
     return firstRow.toMap()[columnName];
   }
 
-  /// values: queryCall('select color from tb where id = @id',  values : {'id': 5})
-  /// values: queryCall('select color from tb where id in @list:array::text[]',  values: ['10','20','30'])
+  /// values: queryCall('select color from tb WHERE id = @id',  values : {'id': 5})
+  /// values: queryCall('select color from tb WHERE id IN (@0, @1, @2)',  values: ['10','20','30'])
   Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
       return PsqlResult().._exception = Exception('psql is not prepared.');
@@ -130,7 +130,7 @@ class Psql2 {
     return ret;
   }
 
-  Future<Stream<Row>?> queryBigData(String query, {dynamic values}) async{
+  Future<Stream<Row>?> queryStreaming(String query, {dynamic values}) async{
     if(!_isPrepare) {
       return Future.value(null);
     }
@@ -464,9 +464,9 @@ class Psql2 {
   /// setStatement: cName = EXCLUDED.cName
   /// setStatement: cName = 50
   Future<PsqlResult> upsert(String tbName, List<String> columns, List<dynamic> values,{
-    required String conflictColumns, required String setStatement}) async{
-    final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
-        ' ON CONFLICT ($conflictColumns) DO UPDATE set $setStatement;';
+    required String conflictColumns, String? setStatement}) async {
+    final query = '''INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) 
+         ON CONFLICT ($conflictColumns) DO UPDATE ${setStatement != null? ' SET $setStatement': ''} ;''';
     return execution(query);
   }
 
@@ -486,7 +486,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<PsqlResult> upsertWhereKv(String tbName, Map<String, dynamic> kv, {required String where}) async{
+  Future<PsqlResult> upsertKvWhere(String tbName, Map<String, dynamic> kv, {required String where}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
@@ -504,7 +504,7 @@ class Psql2 {
     return execution(query);
   }
 
-  Future<PsqlResult> upsertWhereKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
+  Future<PsqlResult> upsertKvReturning(String tbName, Map<String, dynamic> kv, {required String where, required String returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
 
@@ -522,11 +522,19 @@ class Psql2 {
     return queryCall(query);
   }
 
-  Future<PsqlResult> upsertValues(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
+  Future<PsqlResult> upsertConflictColumn(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
     final set = _genUpdateSetStatement(columns, values);
 
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
         ' ON CONFLICT ($conflictColumns) DO UPDATE set $set;';
+    return execution(query);
+  }
+
+  Future<PsqlResult> upsertConflict(String tbName, List<String> columns, List<dynamic> values,{required String conflictExp, bool withSet = false}) async{
+    final set = _genUpdateSetStatement(columns, values);
+
+    final query = '''INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) 
+         ON CONFLICT $conflictExp DO UPDATE ${withSet? 'SET $set' : ''};''';
     return execution(query);
   }
 
@@ -539,14 +547,14 @@ class Psql2 {
   }
 
   // UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
-  Future<PsqlResult> updateReturning(String tbName, String setStatement, String? where, String returning) async{
+  Future<PsqlResult> updateReturning(String tbName, String setStatement, String? where, String returning) async {
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where RETURNING $returning;';
     return queryCall(query);
   }
 
-  Future<PsqlResult> updateByAt(String tbName, String setStatement, String? where, Map<String, dynamic> values) async{
+  Future<PsqlResult> updateByAt(String tbName, String setStatement, String? where, Map<String, dynamic> values) async {
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';

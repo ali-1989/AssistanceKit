@@ -2,7 +2,7 @@ name: assistance_kit
 description: tools package.
 # homepage: https://www.example.com
 
-version: 0.1.11
+version: 0.1.13
 publish_to: 'none'
 
 
@@ -13,7 +13,7 @@ dependencies:
   postgresql2: 1.0.3                         # Edited, pool   {is Edited type_converter}
   #postgres: 2.5.2                            # transaction
   file: ^7.0.0
-  http: ^1.1.0
+  http: ^1.1.2
 
 dev_dependencies:
   test: any

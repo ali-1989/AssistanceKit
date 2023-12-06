@@ -1,7 +1,7 @@
 import 'package:assistance_kit/api/helpers/boolHelper.dart';
 
 bool isSameType(Type t1, Type t2){
-  return t1.hashCode == t2.hashCode;
+  return t1.hashCode == t2.hashCode || (t1).toString().replaceFirst('?', '') == (t2).toString();
   // T.hashCode == ((int).hashCode)
 }
 
