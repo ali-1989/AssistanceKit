@@ -416,7 +416,7 @@ class Psql2 {
 
   /// conflictExp: can empty
   /// conflictExp: ON CONSTRAINT constraint_name
-  /// conflictExp: (ColumnNames)                   ColumnName must unique for conflict
+  /// conflictExp: (c1, c2,...)                   ColumnName must unique for conflict
   /// conflictExp: (ColumnNames) WHERE ...
   Future<PsqlResult> insertIgnore(String tbName, List<String> columns, List<dynamic> values, {String conflictExp = ''}) async{
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
@@ -461,12 +461,15 @@ class Psql2 {
     return execution(query, values: values);
   }
 
-  /// setStatement: cName = EXCLUDED.cName
-  /// setStatement: cName = 50
-  Future<PsqlResult> upsert(String tbName, List<String> columns, List<dynamic> values,{
-    required String conflictColumns, String? setStatement}) async {
+  /// conflict : (col1, col2)   < for unique columns
+  /// conflict : ON CONSTRAINT constraint_name
+  /// setStatement: SET cName = EXCLUDED.cName
+  /// setStatement: SET cName = 50
+  Future<PsqlResult> upsert(String tbName, List<String> columns, List<dynamic> values,{required String conflict, String? setStatement}) async {
+    setStatement ??= _genUpdateSetStatement(columns, values);
+
     final query = '''INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) 
-         ON CONFLICT ($conflictColumns) DO UPDATE ${setStatement != null? ' SET $setStatement': ''} ;''';
+         ON CONFLICT $conflict DO UPDATE $setStatement;''';
     return execution(query);
   }
 
@@ -522,22 +525,6 @@ class Psql2 {
     return queryCall(query);
   }
 
-  Future<PsqlResult> upsertConflictColumn(String tbName, List<String> columns, List<dynamic> values,{required String conflictColumns}) async{
-    final set = _genUpdateSetStatement(columns, values);
-
-    final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) '
-        ' ON CONFLICT ($conflictColumns) DO UPDATE set $set;';
-    return execution(query);
-  }
-
-  Future<PsqlResult> upsertConflict(String tbName, List<String> columns, List<dynamic> values,{required String conflictExp, bool withSet = false}) async{
-    final set = _genUpdateSetStatement(columns, values);
-
-    final query = '''INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) 
-         ON CONFLICT $conflictExp DO UPDATE ${withSet? 'SET $set' : ''};''';
-    return execution(query);
-  }
-
   Future<PsqlResult> update(String tbName, String setStatement, String? where) async{
     where ??= '1 = 1';
 
@@ -546,7 +533,7 @@ class Psql2 {
     return execution(query);
   }
 
-  // UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
+  /// UPDATE country set name = 'iran' where iso = 'ir' RETURNING name,iso ;
   Future<PsqlResult> updateReturning(String tbName, String setStatement, String? where, String returning) async {
     where ??= '1 = 1';
 
@@ -610,7 +597,7 @@ class Psql2 {
   }
 
   /// note: column name must be lowercase
-  Future<PsqlResult> getColumn<T>(String querySt, String columnName) async {
+  Future<PsqlResult> getColumn(String querySt, String columnName) async {
     final cursor = await queryCall(querySt);
 
     if(cursor.hasError() || cursor.rowsCount() < 1){
@@ -623,8 +610,7 @@ class Psql2 {
   }
 
   /// SELECT id FROM tb WHERE parent_id = 10;
-
-  // return int or 'RETURNING' value
+  /// return int or 'RETURNING' value
   Future<PsqlResult> delete(String tbName, String? where) async {
     where ??= '1 = 1';
 
@@ -681,6 +667,7 @@ class Psql2 {
 
   Pool? get pool => _pool;
   Connection get connection => _connection;
+
   ///================ tools =====================================================
   static String? castToJsonb(dynamic mapOrListOrJs, {bool nullIfNull = true}){
     if(mapOrListOrJs == null){
@@ -787,8 +774,12 @@ class PsqlResult {
     return _exception != null;
   }
 
+  bool _empty(){
+    return !(_rowResult != null && _rowResult!.isNotEmpty) && _intResult == null;
+  }
+
   bool hasErrorOrEmpty(){
-    return _exception != null || _rowResult == null || _rowResult!.isEmpty;
+    return hasError() || _empty();
   }
 
   Exception? getError(){

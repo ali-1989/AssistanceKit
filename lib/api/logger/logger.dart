@@ -74,7 +74,7 @@ class Logger {
     return f.path;
   }
 }
-///===================================================================================================
+///=============================================================================
 void isoHandler2(SendPort port) {
   var com = ReceivePort();
   port.send(com.sendPort);
@@ -132,7 +132,7 @@ Future<void> _logToRelativeFile(String filePath, String text, String type) async
   var pr = '$type::$text\n----------------------------|\n';
   await f.writeAsString(pr, mode: FileMode.append);
 }
-///===================================================================================================
+///=============================================================================
 class IsolateData {
   SendPort port;
   String fileName;
