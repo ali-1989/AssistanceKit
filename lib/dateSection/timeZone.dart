@@ -3,80 +3,40 @@ import 'package:assistance_kit/api/system.dart';
 class TimeZone {
   TimeZone._();
 
-  static Duration getOffset(String timezone, {bool dayLight = false}){
-    final res = _getTimezoneUTCOffset(timezone, daylight: dayLight);
-
-    if(res != null){
-      return res;
-    }
-
-    final now = DateTime.now();
-    return now.timeZoneOffset;
-  }
-
-  static int getOffsetAsMillisByDayLight(String timezone, bool dayLight){
-    return getOffset(timezone, dayLight: dayLight).inMilliseconds;
-  }
-
-  static int getOffsetAsMillis(String timezone){
-    return getOffset(timezone).inMilliseconds;
-  }
-
-  static List<String> getTimeZonesByOffset(int offsetMillis){
-    return _getTimezoneNames(offsetMillis);
-  }
-
-  static List<String> getTimeZonesByOffsetAndDayLight(int offsetMillis, bool dayLight){
-    return _getTimezoneNames(offsetMillis, daylight: dayLight);
-  }
-
-  static String getFirstTimeZoneByOffset(int offsetMillis){
-    final list = _getTimezoneNames(offsetMillis);
-    // tehran|kabul is same
-    return list[0];
-  }
-
-  static String getFirstTimeZoneByOffsetDayLight(int offsetMillis, bool dayLight){
-    final list = _getTimezoneNames(offsetMillis, daylight: dayLight);
-
-    if(list.isEmpty){
-      return  '-tz null-';
-    }
-
-    // tehran|kabul is same
-    return list[0];
-  }
 
   // android: IRDT
   static String getCurrentTimezone(){
-    if(System.isWindows()){
-      var x = DateTime.now().timeZoneName.replaceFirst(' Daylight Time', '');
-      var res = windowsToLinux(x);
+    final cTz = DateTime.now().timeZoneName;
 
-      if(res.isEmpty) {
-        return windowsToLinux('$x Standard Time');
+    if(System.isWindows()){
+      final filter = cTz.replaceFirst(' Daylight Time', '');
+      var res = windowsTzToLinuxTz(filter);
+      res ??= windowsTzToLinuxTz('$filter Standard Time');
+
+      if(res == null) {
+        return cTz;
       }
 
       return res;
     }
 
-    return DateTime.now().timeZoneName;
+    return cTz;
   }
 
-  static String linuxToWindows(String linux){
-    for(final m in _winToLinux){
-      var lin = m['linux'];
+  static String? linuxTzToWindowsTz(String linux){
+    for(final m in _windowsTzToLinuxTz){
+      final lin = m['linux'];
 
       if(linux == lin) {
         return m['windows']!;
       }
     }
 
-    return '';
+    return null;
   }
 
-  static String windowsToLinux(String windows){
-    for(final m in _winToLinux){
+  static String? windowsTzToLinuxTz(String windows){
+    for(final m in _windowsTzToLinuxTz){
       var win = m['windows'];
 
       if(win == windows) {
@@ -84,32 +44,45 @@ class TimeZone {
       }
     }
 
-    return '';
+    return null;
   }
 
-  // getDateTimeZoned('Europe/Rome')
-  static DateTime getDateTimeZoned(String timezone, {bool dayLight = true}){
-    final localNow = DateTime.now();
-    final offsetMillLocal = localNow.timeZoneOffset.inMilliseconds;
-    var utc = DateTime.fromMillisecondsSinceEpoch(localNow.millisecondsSinceEpoch - offsetMillLocal);
+  static List<int>? getOffsetAsMillis(String timezone){
+    final res = getUtcOffsetsForTimezone(timezone);
 
-    var offsetMillTz = getOffsetAsMillisByDayLight(timezone, dayLight);
-    utc = utc.add(Duration(milliseconds: offsetMillTz));
+    if(res == null){
+      return null;
+    }
 
-    return utc;
+    return [res[0].inMilliseconds, res[1].inMilliseconds];
   }
 
-  static Duration? _getTimezoneUTCOffset(String timezone, {bool daylight = false}) {
+  /// return a List with 2 Duration, 1th is without DayLight, 2th with it.
+  static List<Duration>? getUtcOffsetsForTimezone(String timezone) {
     final offsets = _timezoneUTCOffsets[timezone];
 
     if (offsets == null){
       return null;
     }
 
-    return Duration(seconds: daylight ? offsets[1] : offsets[0]);
+    return [Duration(seconds: offsets[0]), Duration(seconds: offsets[1])];
   }
 
-  static List<String> _getTimezoneNames(int offsetMillis, {bool daylight = false}) {
+  // getDateTimeZoned('Europe/Rome')
+  static DateTime getDateTimeZoned(String timezone, bool isInDayLight){
+    final localNow = DateTime.now();
+    final offsetMillLocal = localNow.timeZoneOffset.inMilliseconds;
+    var utc = DateTime.fromMillisecondsSinceEpoch(localNow.millisecondsSinceEpoch - offsetMillLocal);
+
+    final offsetMillTz = getUtcOffsetsForTimezone(timezone)!;
+    utc = utc.add(isInDayLight? offsetMillTz[1] : offsetMillTz[0]);
+
+    return utc;
+  }
+
+  /// [offsetMillis] must be in un-dayLight period.
+  static List<String> getTimezoneNamesForOffset(int offsetMillis) {
+    bool daylight = false;
     offsetMillis = offsetMillis ~/ 1000;
     final res = <String>[];
 
@@ -131,7 +104,28 @@ class TimeZone {
 
     return res;
   }
-  ///=====================================================================================================
+
+  // (tehran & kabul) is same
+  static String getFirstTimeZoneByOffset(int offsetMillis){
+    final list = getTimezoneNamesForOffset(offsetMillis);
+
+    if(list.isEmpty){
+      return  '-tz null-';
+    }
+
+    return list[0];
+  }
+
+  static String getFirstTimeZoneByOffsetInDayLightPeriod(int offsetMillis){
+    final list = getTimezoneNamesForOffset(offsetMillis);
+
+    if(list.isEmpty){
+      return  '-tz null-';
+    }
+
+    return list[1];
+  }
+  ///===========================================================================
   static const Map<String, List<int>> _timezoneUTCOffsets = {
     'Africa/Abidjan': [0, 0],
     'Africa/Accra': [0, 0],
@@ -451,7 +445,7 @@ class TimeZone {
     'Asia/Taipei': [28800, 28800],
     'Asia/Tashkent': [18000, 18000],
     'Asia/Tbilisi': [14400, 14400],
-    'Asia/Tehran': [12600, 16200],
+    'Asia/Tehran': [12600, 12600], // 12600: 3.5*60*60   16200: 4.5
     'Asia/Tel_Aviv': [7200, 10800],
     'Asia/Thimbu': [21600, 21600],
     'Asia/Thimphu': [21600, 21600],
@@ -737,7 +731,7 @@ class TimeZone {
     'Zulu': [0, 0],
   };
 
-  static const _winToLinux = <Map<String, String>>[
+  static const _windowsTzToLinuxTz = <Map<String, String>>[
     {
       'windows': 'AUS Central Standard Time',
       'linux': 'Australia/Darwin'

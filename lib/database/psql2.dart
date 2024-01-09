@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:assistance_kit/api/logger/logger.dart';
+import 'package:assistance_kit/api/helpers/textHelper.dart';
 import 'package:postgresql2/pool.dart';
 import 'package:postgresql2/postgresql.dart';
 
@@ -122,8 +123,11 @@ class Psql2 {
         }
       }
     }
-    catch (e){
-      Logger.L.logToAll('[psql2] error: $e\n====> query: $query\n');
+    catch (e, tr){
+      String msg = '[psql2] error (queryCall method): $e\n  ===> query: $query';
+      msg += '\nTrace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
+
+      Logger.L.logToAll(msg);
       ret._exception = e as Exception;
     }
 
@@ -188,8 +192,11 @@ class Psql2 {
         }
       }
     }
-    catch (e){
-      Logger.L.logToAll('[psql2] error: $e\n====> query:$query\n');
+    catch (e, tr){
+      String msg = '[psql2] error (execution method): $e\n  ===> query:$query';
+      msg += '\n===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
+
+      Logger.L.logToAll(msg);
       ret._exception = e as Exception;
     }
 

@@ -357,7 +357,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
     for(int i=1; i <= 12; i++){
       var d1 = DateTime(today.year, i, 1);
-      var d12 = DateTime.utc(today.year, i, 1);
+      final d12 = DateTime.utc(today.year, i, 1);
 
       if(dif == null) {
         dif = d1.difference(d12);
@@ -515,7 +515,8 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
   }
 
   int _getTimeZoneOffset(){
-    return TimeZone.getOffsetAsMillisByDayLight(_timeZone, getDaylightState());
+    final res = TimeZone.getOffsetAsMillis(_timeZone)!;
+    return  getDaylightState()? res[1] : res[0];
   }
 
   /*void moveUtcToLocal<T extends ADateStructure>() {
@@ -548,7 +549,12 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
     moveMillSecond(localOffset);
 
-    _timeZone = TimeZone.getFirstTimeZoneByOffsetDayLight(localOffset, getDaylightState());
+    if(getDaylightState()) {
+      _timeZone = TimeZone.getFirstTimeZoneByOffsetInDayLightPeriod(localOffset);
+    }
+    else {
+      _timeZone = TimeZone.getFirstTimeZoneByOffset(localOffset);
+    }
   }
 
   void moveLocalToUTC<T extends ADateStructure>() {

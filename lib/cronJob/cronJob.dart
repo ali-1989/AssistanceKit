@@ -18,26 +18,32 @@ class CronJob {
 
     // "Asia/Tehran"
     static JobHandler createExactCronJob(String timezone, int hour, int min, int interval, JobTask fun, bool startNow) {
-        var dt = TimeZone.getDateTimeZoned(timezone);
+      var gr = GregorianDate();
+      var timeZoneCurrent = TimeZone.getDateTimeZoned(timezone, gr.getDaylightState());
+      print('======== dt: $timeZoneCurrent');
+      var check = GregorianDate.from(timeZoneCurrent);
+      check.attachTimeZone(timezone);
+      print('======== check2: $check');
+      check.changeTime(hour, min, 0, 0);
+      print('======== check3: $check');
 
-        var check = GregorianDate.from(dt);
-        check.attachTimeZone(timezone);
-        check.changeTime(hour, min, 0, 0);
+        var now = GregorianDate.from(timeZoneCurrent);
+        //now.attachTimeZone(timezone);
 
-        var now = GregorianDate.from(dt);
-        now.attachTimeZone(timezone);
-
-        if (!startNow) {
+        /*if (!startNow) {
             if (now.isAfterEqual(check)) {
               now.moveDay(1);
             }
-        }
+        }*/
 
-        now.changeTime(hour, min, 0, 0);
+        //now.changeTime(hour, min, 0, 0);
         var cal = now.convertToSystemDate();
-        cal = DateHelper.localToUtc(cal);
+        print('======== cal1: $cal');
 
-        var res = Job(fun, interval, cal);
+        cal = DateHelper.localToUtc(cal);
+        print('======== ****: $cal');
+
+        final res = Job(fun, interval, cal);
         return CronJobs.scheduleJob(res);
     }
 }
