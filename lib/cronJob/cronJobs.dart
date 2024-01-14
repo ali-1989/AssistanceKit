@@ -11,7 +11,7 @@ class CronJobs {
 
     static JobHandler scheduleJob(Job job) {
         init();
-        var jh = JobHandler(job);
+        final jh = JobHandler(job);
         jobList.add(jh);
 
         return jh;
@@ -26,13 +26,13 @@ class CronJobs {
       return;
     }
 
-    for (var j in jobList) {
+    for (final j in jobList) {
       if (j.state != JobState.active) {
         continue;
       }
 
-      var now = System.currentTimeMillisUtc();
-      var job = j.getJob();
+      final now = System.currentTimeMillisUtc();
+      final job = j.getJob();
 
       if (job.firstTickAt != null) {
         if (job.firstTickAt!.millisecondsSinceEpoch > now) {
@@ -52,7 +52,7 @@ class CronJobs {
         job.firstDelay = 0;
         job.repeatCount++;
 
-        var cancelRepeat = job.CancelAfterRepeat;
+        final cancelRepeat = job.CancelAfterRepeat;
 
         if (cancelRepeat > 0 && job.repeatCount > cancelRepeat) {
           j.state = JobState.finished;
@@ -81,7 +81,7 @@ class CronJobs {
             shutdown();
         }
         else {
-            for (var j in jobList) {
+            for (final j in jobList) {
                 if (j.state == JobState.active) {
                   return;
                 }
@@ -96,7 +96,7 @@ class CronJobs {
     isStarted = false;
     timer.cancel();
 
-    for (var j in jobList) {
+    for (final j in jobList) {
         j.state = JobState.initial;
     }
   }

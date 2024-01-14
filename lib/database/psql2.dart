@@ -105,7 +105,7 @@ class Psql2 {
   /// values: queryCall('select color from tb WHERE id IN (@0, @1, @2)',  values: ['10','20','30'])
   Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
-      return PsqlResult().._exception = Exception('psql is not prepared.');
+      return PsqlResult()..setException(Exception('psql is not prepared.'));
     }
 
     final ret = PsqlResult();
@@ -125,10 +125,11 @@ class Psql2 {
     }
     catch (e, tr){
       String msg = '[psql2] error (queryCall method): $e\n  ===> query: $query';
-      msg += '\nTrace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
+      msg += '\n  ===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
 
       Logger.L.logToAll(msg);
-      ret._exception = e as Exception;
+      ret.stackTrace = tr;
+      ret.setException(e);
     }
 
     return ret;
@@ -174,7 +175,7 @@ class Psql2 {
   /// return 1 if correct doing and return 0 if not doing.
   Future<PsqlResult> execution(String query, {dynamic values, bool autoClose = false}) async{
     if(!_isPrepare) {
-      return PsqlResult().._exception = Exception('psql is not prepare.');
+      return PsqlResult()..setException(Exception('psql is not prepare.'));
     }
 
     final ret = PsqlResult();
@@ -194,10 +195,11 @@ class Psql2 {
     }
     catch (e, tr){
       String msg = '[psql2] error (execution method): $e\n  ===> query:$query';
-      msg += '\n===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
+      msg += '\n   ===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
 
       Logger.L.logToAll(msg);
-      ret._exception = e as Exception;
+      ret.stackTrace = tr;
+      ret.setException(e);
     }
 
     return ret;
@@ -492,7 +494,6 @@ class Psql2 {
     }
 
     final query = 'INSERT INTO $tbName (${columns.join(',')}) values(${_joinValue(values)}) ON CONFLICT DO NOTHING;';
-
     return execution(query);
   }
 
@@ -536,7 +537,6 @@ class Psql2 {
     where ??= '1 = 1';
 
     final query = 'UPDATE $tbName SET $setStatement WHERE $where;';
-    
     return execution(query);
   }
 
@@ -771,14 +771,24 @@ class Psql2 {
 }
 ///=============================================================================
 class PsqlResult {
-  Exception? _exception;
+  static void Function(PsqlResult psqlResult)? onError;
+
+  Object? _exceptionObj;
+  StackTrace? stackTrace;
   List<Row>? _rowResult;
   dynamic _oneResult;
   int? _intResult;
 
+  PsqlResult();
+
+  void setException(Object exception){
+    _exceptionObj = exception;
+
+    onError?.call(this);
+  }
 
   bool hasError(){
-    return _exception != null;
+    return _exceptionObj != null;
   }
 
   bool _empty(){
@@ -789,8 +799,8 @@ class PsqlResult {
     return hasError() || _empty();
   }
 
-  Exception? getError(){
-    return _exception;
+  Object? getError(){
+    return _exceptionObj;
   }
 
   int rowsCount(){

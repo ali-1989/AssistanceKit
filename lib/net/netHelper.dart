@@ -9,14 +9,16 @@ import 'dart:math';
 class NetHelper {
   NetHelper._();
 
-  static Future<List<Map<String, String>>> getIps() async {
-    // type.name: [IPv4/IPv6]
-    var res = <Map<String, String>>[];
+  static Future<List<Map<String, dynamic>>> getAllIps() async {
+    final res = <Map<String, dynamic>>[];
 
-    for (var interface in await NetworkInterface.list()) {
-      var itm = <String, String>{};
-      itm['name'] = interface.name;
+    for (final interface in await NetworkInterface.list()) {
+      final itm = <String, dynamic>{};
       itm['address'] = interface.addresses.first.address;
+      itm['name'] = interface.name;  // Ethernet|Wi-Fi
+      itm['isLinkLocal'] = interface.addresses.first.isLinkLocal;
+      itm['isLoopback'] = interface.addresses.first.isLoopback;
+      itm['isMulticast'] = interface.addresses.first.isMulticast;
 
       res.add(itm);
     }
@@ -24,15 +26,20 @@ class NetHelper {
     return res;
   }
 
-  static Future<InternetAddress> retrieveIPAddress() async {
+  static Future<InternetAddress> retrieveFirstIPAddress() async {
     int code = Random().nextInt(255);
+
     final dgSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     dgSocket.readEventsEnabled = true;
     dgSocket.broadcastEnabled = true;
 
-    Future<InternetAddress> ret = dgSocket.timeout(const Duration(milliseconds: 100), onTimeout: (sink) {
+    final dur = const Duration(milliseconds: 100);
+
+    onTimeout(sink) {
       sink.close();
-    }).expand<InternetAddress>((event) {
+    }
+
+    List<InternetAddress> onConvert(event) {
       if (event == RawSocketEvent.read) {
         Datagram? dg = dgSocket.receive();
 
@@ -41,13 +48,112 @@ class NetHelper {
           return [dg.address];
         }
       }
+
       return [];
-    }).firstWhere((InternetAddress? a) => a != null);
+    }
+
+    Stream<InternetAddress> ret = dgSocket
+        .timeout(dur, onTimeout: onTimeout)
+        .expand<InternetAddress>(onConvert).where((InternetAddress? a) => a != null);
 
     dgSocket.send([code], InternetAddress('255.255.255.255'), dgSocket.port);
-    return ret;
+
+    return ret.first;
   }
-  
+
+  static Future<String> getGateway() async{
+    if(System.isWindows()) {
+      final shellRes = await ShellAssistance.shell('ipconfig', [], runInShell: true);
+
+      final text = shellRes.stdout as String;
+      final lines = text.split(RegExp(r'\n'));
+
+      for (final line in lines) {
+        if (line.indexOf(RegExp(r'Default Gateway')) > 0) {
+          final start = line.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+          if (start > -1) {
+            return TextHelper.removeNonViewableFull(line.substring(start));
+          }
+        }
+      }
+    }
+
+    final shellRes = await ShellAssistance.shell('ip', ['route'], runInShell: true);
+
+    final text = shellRes.stdout as String;
+    final lines = text.split(RegExp(r'\n'));
+
+    for (final line in lines) {
+      if (line.contains(RegExp(r'default via', multiLine: false, caseSensitive: false))) {
+        final start = line.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+        if (start > -1) {
+          return TextHelper.removeNonViewableFull(line.substring(start));
+        }
+      }
+    }
+
+    return '';
+  }
+
+  static Future<String> getActiveIp() async{
+    if(System.isWindows()) {
+      final shellRes = await ShellAssistance.shell('ipconfig', [], runInShell: true);
+
+      final text = shellRes.stdout as String;
+      final lines = text.split(RegExp(r'\n'));
+
+      String ipv4Line = '';
+      String getWayLine = '';
+
+      for (final line in lines) {
+        if (line.contains(RegExp(r'IPv4 Address'))) {
+          ipv4Line = line;
+        }
+
+        if (line.contains(RegExp(r'Default Gateway'))) {
+          getWayLine = line;
+        }
+      }
+
+      final start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+      if (start > -1) {
+        return TextHelper.removeNonViewableFull(ipv4Line.substring(start));
+      }
+
+      return '';
+    }
+
+    final shellRes = await ShellAssistance.shell('ip', ['route'], runInShell: true);
+
+    final text = shellRes.stdout as String;
+    final lines = text.split(RegExp(r'\n'));
+
+    String ipv4Line = '';
+    String getWayLine = '';
+
+    for (final line in lines) {
+      if (line.contains(RegExp(r'link src',multiLine: false, caseSensitive: false))) {
+        ipv4Line = line;
+      }
+
+      if (line.contains(RegExp(r'default via', multiLine: false, caseSensitive: false))) {
+        getWayLine = line;
+      }
+    }
+
+    final start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+    if (start > -1) {
+      final index = ipv4Line.indexOf(RegExp(r'link src', multiLine: false, caseSensitive: false));
+      return TextHelper.removeNonViewableFull(ipv4Line.substring(index + 'link src'.length));
+    }
+
+    return '';
+  }
+
   static Future<GeolocationData?> getRouterIpData({String query = ''}) async {
     try {
       final response = await http.get(Uri.parse('http://ip-api.com/json/$query'));
@@ -64,46 +170,7 @@ class NetHelper {
     }
   }
 
-  static Future<String> getGateway() async{
-    if(System.isWindows()) {
-      return ShellAssistance.shell('ipconfig', [], runInShell: true).then((process) {
-        var text = process.stdout as String;
-        var lines = text.split(RegExp(r'\n'));
-
-        for (var line in lines) {
-          if (line.indexOf(RegExp(r'Default Gateway')) > 0) {
-            var start = line.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
-
-            if (start > -1) {
-             return TextHelper.removeNonViewableFull(line.substring(start));
-            }
-          }
-        }
-
-        return '';
-      });
-    }
-    else {
-      return ShellAssistance.shell('ip', ['route'], runInShell: true).then((process) {
-        var text = process.stdout as String;
-        var lines = text.split(RegExp(r'\n'));
-
-        for (var line in lines) {
-          if (line.contains(RegExp(r'default via', multiLine: false, caseSensitive: false))) {
-            var start = line.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
-
-            if (start > -1) {
-              return TextHelper.removeNonViewableFull(line.substring(start));
-            }
-          }
-        }
-
-        return '';
-      });
-    }
-  }
-
- /* static Future<String> findCountryWithIP() async {
+/* static Future<String> findCountryWithIP() async {
     var res = await findCountryWithIP1();
     res ??= await findCountryWithIP2();
     res ??= await findCountryWithIP3();

@@ -17,33 +17,22 @@ class CronJob {
     }
 
     // "Asia/Tehran"
-    static JobHandler createExactCronJob(String timezone, int hour, int min, int interval, JobTask fun, bool startNow) {
-      var gr = GregorianDate();
-      var timeZoneCurrent = TimeZone.getDateTimeZoned(timezone, gr.getDaylightState());
-      print('======== dt: $timeZoneCurrent');
-      var check = GregorianDate.from(timeZoneCurrent);
-      check.attachTimeZone(timezone);
-      print('======== check2: $check');
-      check.changeTime(hour, min, 0, 0);
-      print('======== check3: $check');
+    static JobHandler createExactCronJob(String timezone, int hour, int min, int interval, JobTask fun) {
+      final gr = GregorianDate();
+      final timeZoneCurrent = TimeZone.getDateTimeZoned(timezone, gr.getDaylightState());
 
-        var now = GregorianDate.from(timeZoneCurrent);
-        //now.attachTimeZone(timezone);
+      final now = GregorianDate.from(timeZoneCurrent);
+      now.attachTimeZone(timezone);
+      now.changeTime(hour, min, 0, 0);
+      now.moveLocalToUTC();
 
-        /*if (!startNow) {
-            if (now.isAfterEqual(check)) {
-              now.moveDay(1);
-            }
-        }*/
+      /*if (now.convertToSystemDate().isBefore(DateHelper.nowMinusUtcOffset())) {
+        now.moveDay(1);
+      }*/
 
-        //now.changeTime(hour, min, 0, 0);
-        var cal = now.convertToSystemDate();
-        print('======== cal1: $cal');
+      final utc = now.convertToSystemDate();
 
-        cal = DateHelper.localToUtc(cal);
-        print('======== ****: $cal');
-
-        final res = Job(fun, interval, cal);
-        return CronJobs.scheduleJob(res);
+      final res = Job(fun, interval, utc);
+      return CronJobs.scheduleJob(res);
     }
 }

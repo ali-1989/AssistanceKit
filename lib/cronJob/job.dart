@@ -5,13 +5,13 @@ enum JobState {
 	active,
 	finished
 }
-///====================================================================================================
+///=============================================================================
 class JobTask {
 	JobTask();
 
 	late void Function() call;
 }
-///====================================================================================================
+///=============================================================================
 class Job {
 	String _id;
 	JobTask _task;
@@ -21,6 +21,7 @@ class Job {
 	int repeatCount = 0;
 	int CancelAfterRepeat = 0;
 
+	/// [firstTickAt] must be in UTC
 	Job(this._task, this.interval, this.firstTickAt): _id = Generator.generateKey(5) {
 		if(interval < 60000) {
 		  throw Exception('Job Interval must be bigger than 60000 milliseconds.');
