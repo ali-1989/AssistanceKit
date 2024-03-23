@@ -104,8 +104,8 @@ class NetHelper {
       final text = shellRes.stdout as String;
       final lines = text.split(RegExp(r'\n'));
 
-      String ipv4Line = '';
-      String getWayLine = '';
+      String ipv4Line = '-';
+      String getWayLine = '-';
 
       for (final line in lines) {
         if (line.contains(RegExp(r'IPv4 Address'))) {
@@ -114,13 +114,17 @@ class NetHelper {
 
         if (line.contains(RegExp(r'Default Gateway'))) {
           getWayLine = line;
+
+          int start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+          if(start < 0) {
+            start = getWayLine.indexOf(RegExp(r'([a-f0-9:]+:+)+[a-f0-9]+'));
+          }
+
+          if (start > -1) {
+            return TextHelper.removeNonViewableFull(ipv4Line.substring(start));
+          }
         }
-      }
-
-      final start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
-
-      if (start > -1) {
-        return TextHelper.removeNonViewableFull(ipv4Line.substring(start));
       }
 
       return '';
@@ -144,11 +148,15 @@ class NetHelper {
       }
     }
 
-    final start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+    int start = getWayLine.indexOf(RegExp(r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|\b|$)){4}'));
+
+    if(start < 0) {
+      start = getWayLine.indexOf(RegExp(r'([a-f0-9:]+:+)+[a-f0-9]+'));
+    }
 
     if (start > -1) {
       final index = ipv4Line.indexOf(RegExp(r'link src', multiLine: false, caseSensitive: false));
-      return TextHelper.removeNonViewableFull(ipv4Line.substring(index + 'link src'.length));
+      return TextHelper.removeNonViewableFull(ipv4Line.substring(index + 'link src '.length)).trim();
     }
 
     return '';
