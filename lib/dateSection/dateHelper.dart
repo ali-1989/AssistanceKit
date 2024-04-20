@@ -1,7 +1,16 @@
 import 'package:assistance_kit/dateFormatter/src/date_format_base.dart';
+import 'package:assistance_kit/dateSection/timeZone.dart' as tz;
 
 /// note: .toUtc() not change [millisecondsSinceEpoch] value
 
+/**
+    final d1 = DateTime.now();
+		final d2 = DateTime.timestamp();
+		final d3 = DateTime.now().toUtc();
+
+		d2 == d3 != d1
+		d1.millisecondsSinceEpoch == d2.millisecondsSinceEpoch == d3.millisecondsSinceEpoch
+ */
 /*
   When working with DateTime, it recommended to always use DateTime.utc if possible.
   If not possible, then avoid using the add and subtract
@@ -143,9 +152,9 @@ class DateHelper {
 		return utc.add(timeDiff);
 	}
 
-	static DateTime localToUtc(DateTime locale){
+	static DateTime localPcToUtc(DateTime locale){
 		final tzLocalOffset = locale.timeZoneOffset;
-		var d = tzLocalOffset.inMilliseconds;
+		var dif = tzLocalOffset.inMilliseconds;
 
 		/* no need
 		//is bug,   2:30 -> 3:30
@@ -154,13 +163,40 @@ class DateHelper {
 		}
 		*/
 
-		final timeDiff = Duration(milliseconds: -d);
+		if(dif > 0){
+			dif *= -1;
+		}
 
+		final timeDiff = Duration(milliseconds: dif);
+		return locale.add(timeDiff);
+	}
+
+	static DateTime localToUtc(DateTime locale, String srcTimezone, {bool isDayLight = false}){
+		final twoResult = tz.TimeZone.getOffsetAsMillis(srcTimezone);
+		
+		if(twoResult == null){
+			return locale;
+		}
+		print('---$twoResult');
+		int dif;
+
+		if(isDayLight){
+			dif = twoResult.dayLight;
+		}
+		else {
+			dif = twoResult.nonDayLight;
+		}
+
+		if(dif > 0){
+			dif *= -1;
+		}
+
+		final timeDiff = Duration(milliseconds: dif);
 		return locale.add(timeDiff);
 	}
 
 	static String localToUtcAsTimestamp(DateTime inp){
-		return toTimestamp(localToUtc(inp));
+		return toTimestamp(localPcToUtc(inp));
 	}
 
 	// https://pub.dev/packages/flutter_native_timezone

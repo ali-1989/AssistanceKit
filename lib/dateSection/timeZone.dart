@@ -47,25 +47,25 @@ class TimeZone {
     return null;
   }
 
-  static List<int>? getOffsetAsMillis(String timezone){
+  static ({int dayLight, int nonDayLight})? getOffsetAsMillis(String timezone){
     final res = getUtcOffsetsForTimezone(timezone);
 
     if(res == null){
       return null;
     }
 
-    return [res[0].inMilliseconds, res[1].inMilliseconds];
+    return (dayLight: res.dayLight.inMilliseconds, nonDayLight: res.nonDayLight.inMilliseconds);
   }
 
   /// return a List with 2 Duration, 1th is without DayLight, 2th with it.
-  static List<Duration>? getUtcOffsetsForTimezone(String timezone) {
+  static ({Duration dayLight, Duration nonDayLight})? getUtcOffsetsForTimezone(String timezone) {
     final offsets = _timezoneUTCOffsets[timezone];
 
     if (offsets == null){
       return null;
     }
 
-    return [Duration(seconds: offsets[0]), Duration(seconds: offsets[1])];
+    return (nonDayLight: Duration(seconds: offsets[0]), dayLight:Duration(seconds: offsets[1]));
   }
 
   // getDateTimeZoned('Europe/Rome')
@@ -75,20 +75,19 @@ class TimeZone {
     var utc = DateTime.fromMillisecondsSinceEpoch(localNow.millisecondsSinceEpoch - offsetMillLocal);
 
     final offsetMillTz = getUtcOffsetsForTimezone(timezone)!;
-    utc = utc.add(isInDayLight? offsetMillTz[1] : offsetMillTz[0]);
+    utc = utc.add(isInDayLight? offsetMillTz.dayLight : offsetMillTz.nonDayLight);
 
     return utc;
   }
 
   /// [offsetMillis] must be in un-dayLight period.
-  static List<String> getTimezoneNamesForOffset(int offsetMillis) {
-    bool daylight = false;
+  static List<String> getTimezoneNamesForOffset(int offsetMillis, {bool offsetIsDayLight = false}) {
     offsetMillis = offsetMillis ~/ 1000;
     final res = <String>[];
 
     try{
       for (final element in _timezoneUTCOffsets.entries) {
-        if(daylight){
+        if(offsetIsDayLight){
           if(element.value[1] == offsetMillis) {
             res.add(element.key);
           }

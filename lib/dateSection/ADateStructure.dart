@@ -516,7 +516,7 @@ abstract class ADateStructure implements Comparable<ADateStructure> {
 
   int _getTimeZoneOffset(){
     final res = TimeZone.getOffsetAsMillis(_timeZone)!;
-    return  getDaylightState()? res[1] : res[0];
+    return  getDaylightState()? res.dayLight : res.nonDayLight;
   }
 
   /*void moveUtcToLocal<T extends ADateStructure>() {
