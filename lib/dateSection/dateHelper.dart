@@ -177,7 +177,7 @@ class DateHelper {
 		if(twoResult == null){
 			return locale;
 		}
-		print('---$twoResult');
+
 		int dif;
 
 		if(isDayLight){
