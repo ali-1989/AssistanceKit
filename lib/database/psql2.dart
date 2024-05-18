@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:assistance_kit/api/logger/logger.dart';
-import 'package:assistance_kit/api/helpers/textHelper.dart';
 import 'package:postgresql2/pool.dart';
 import 'package:postgresql2/postgresql.dart';
 
@@ -105,7 +103,7 @@ class Psql2 {
   /// values: queryCall('select color from tb WHERE id IN (@0, @1, @2)',  values: ['10','20','30'])
   Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
-      return PsqlResult()..setException(Exception('psql is not prepared.'));
+      return PsqlResult()..setException(Exception('psql is not prepared.'), null);
     }
 
     final ret = PsqlResult();
@@ -124,12 +122,9 @@ class Psql2 {
       }
     }
     catch (e, tr){
-      String msg = '[psql2] error (queryCall method): $e\n  ===> query: $query';
-      msg += '\n  ===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
-
-      Logger.L.logToAll(msg);
-      ret.stackTrace = tr;
-      ret.setException(e);
+      var msg = '[psql2] error (queryCall method): $e\n  ===> query: $query';
+      ret.exceptionMessage = msg;
+      ret.setException(e, tr);
     }
 
     return ret;
@@ -175,7 +170,7 @@ class Psql2 {
   /// return 1 if correct doing and return 0 if not doing.
   Future<PsqlResult> execution(String query, {dynamic values, bool autoClose = false}) async{
     if(!_isPrepare) {
-      return PsqlResult()..setException(Exception('psql is not prepare.'));
+      return PsqlResult()..setException(Exception('psql is not prepare.'), null);
     }
 
     final ret = PsqlResult();
@@ -194,12 +189,9 @@ class Psql2 {
       }
     }
     catch (e, tr){
-      String msg = '[psql2] error (execution method): $e\n  ===> query:$query';
-      msg += '\n   ===> Trace: ${TextHelper.subByCharCountSafe(tr.toString(), 300)}';
-
-      Logger.L.logToAll(msg);
-      ret.stackTrace = tr;
-      ret.setException(e);
+      var msg = '[psql2] error (execution method): $e\n  ===> query:$query';
+      ret.exceptionMessage = msg;
+      ret.setException(e, tr);
     }
 
     return ret;
@@ -433,9 +425,7 @@ class Psql2 {
     return execution(query);
   }
 
-  /**
-   * if be ignore, isExecuted is false.
-   */
+  /// if be ignore, isExecuted() is false.
   Future<PsqlResult> insertIgnoreWhere(String tbName, Map<String, dynamic> kv, {required String where, String? returning}) async{
     final col = kv.keys.toList();
     final val = kv.values.toList();
@@ -571,7 +561,8 @@ class Psql2 {
     return updateByAt(tbName, set, where, setKv);
   }
 
-  Future<PsqlResult> exist(String tbName, String whereCondition) async{
+  /// use isExecuted() for result.
+  Future<PsqlResult> exist(String tbName, String whereCondition) async {
     final q = 'SELECT EXISTS (SELECT * FROM $tbName WHERE $whereCondition LIMIT 1);';
 
     final res = await queryCall(q);
@@ -774,6 +765,7 @@ class PsqlResult {
   static void Function(PsqlResult psqlResult)? onError;
 
   Object? _exceptionObj;
+  String? exceptionMessage;
   StackTrace? stackTrace;
   List<Row>? _rowResult;
   dynamic _oneResult;
@@ -781,8 +773,9 @@ class PsqlResult {
 
   PsqlResult();
 
-  void setException(Object exception){
+  void setException(Object exception, StackTrace? stackTrace){
     _exceptionObj = exception;
+    this.stackTrace = stackTrace;
 
     onError?.call(this);
   }
@@ -829,9 +822,7 @@ class PsqlResult {
     return res;
   }
 
-  /**
-   * this is for (Insert, Update, Delete), if doing return 1.
-   */
+  /// this is for (Insert, Update, Delete, Exist), if doing return 1.
   bool isExecuted(){
     return !hasError() && _intResult != null && _intResult! > 0;
   }

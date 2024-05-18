@@ -13,20 +13,18 @@ class Logger {
   late Completer<bool> _completer;
 
   static Logger get L {
-    _staticLogger ??= Logger(getStoragePath(), logName: 'staticLog');
-
+    _staticLogger ??= Logger(getStoragePath(), fileName: 'public_log');
     return _staticLogger!;
   }
 
-  Logger(this._dirPath, {String? logName}): _fileName = logName?? 'log' {
-    var receiver = ReceivePort();
+  Logger(this._dirPath, {String? fileName}): _fileName = fileName?? 'log' {
+    final receiver = ReceivePort();
     _completer = Completer();
-    var msg = IsolateData(receiver.sendPort, _fileName, _dirPath);
+    final msg = DataHolder(receiver.sendPort, _fileName, _dirPath);
 
-    var f = Isolate.spawn<IsolateData>(isoHandler, msg);
-    f.then((iso) {
-      //_isolate = iso;
+    final f = Isolate.spawn<DataHolder>(isolateFunction, msg);
 
+    f.then((isolate) {
       receiver.first.then((port){
         _sendPort = port;
         receiver.close();
@@ -37,28 +35,22 @@ class Logger {
 
   Future<bool> isPrepare() => _completer.future;
 
-  void logToAll(dynamic obj, {String type = ''}){
-    logToScreen(obj, type: type);
-    logToFile(obj, type: type);
+  void logToAll(dynamic obj){
+    logToScreen(obj);
+    logToFile(obj);
   }
 
-  void logToFile(dynamic text, {String type = ''}){
-    _sendPort?.send(['◄LOGGER►$type', text.toString()]);
+  void logToFile(dynamic text){
+    _sendPort?.send(['◄LOGGER►$text']);
   }
 
-  void logToScreen(dynamic text, {String type = ''}){
-    if(type.isNotEmpty) {
-      print('◄LOGGER►[$type]: ${text.toString()}');
-    }
-    else {
-      print('◄LOGGER►$text');
-    }
+  void logToScreen(dynamic text){
+    print('◄LOGGER►${text.toString()}');
   }
 
   static String getStoragePath(){
     //return MemoryFileSystem().systemTempDirectory.path;
-
-    // G:/Programming/DartProjects/BrandfitServer/bin/run.dart
+    // G:/Programming/DartProjects/project/bin/run.dart
     var pat = Platform.script.path;
 
     if(Platform.isWindows) {
@@ -69,39 +61,28 @@ class Logger {
 
     var f = File(pat);
     f = File(f.parent.parent.path);
-    //f = File(f.parent.path);
 
     return f.path;
   }
 }
 ///=============================================================================
-void isoHandler2(SendPort port) {
-  var com = ReceivePort();
-  port.send(com.sendPort);
-}
-
-void isoHandler(IsolateData isolateData){
-  var com = ReceivePort();
+void isolateFunction(DataHolder dataHolder){
+  final receiver = ReceivePort();
   final _que = Queue<List<String>>();
   var _counter = 1;
 
-  isolateData.port.send(com.sendPort);
+  dataHolder.sendPort.send(receiver.sendPort);
 
-
-  com.listen((message) {
-    _que.add(message);
-  });
-
-  Future<String> getFilePath() async{
-    var p = isolateData.basePath + Platform.pathSeparator + '${isolateData.fileName}$_counter.txt';
-    var f = File(p);
+  Future<String> getFilePath() async {
+    final p = dataHolder.basePath + Platform.pathSeparator + '${dataHolder.fileName}$_counter.txt';
+    final f = File(p);
 
     if(!f.existsSync()) {
       await FileHelper.createNewFile(p);
       return p;
     }
     else {
-      var size = await f.length();
+      final size = await f.length();
 
       if(size < 1024000){
         return p;
@@ -112,32 +93,49 @@ void isoHandler(IsolateData isolateData){
     }
   }
 
-  Timer.periodic(Duration(milliseconds: 200), (timer) async{
+  receiver.listen((message) async {
+    _que.add(message);
 
     while(_que.isNotEmpty) {
-      var lis = _que.removeFirst();//_que.elementAt(0);
+      final lis = _que.removeFirst(); //_que.elementAt(0);
+      await _log(await getFilePath(), lis[0]);
+    }
+  });
+
+
+  /*Timer.periodic(Duration(milliseconds: 250), (timer) async {
+    while(_que.isNotEmpty) {
+      final lis = _que.removeFirst(); //_que.elementAt(0);
 
       await _log(await getFilePath(), lis[1], lis[0]);
     }
-  });
+  });*/
 }
 
-Future _log(String filePath, String text, String type) async{
-  return _logToRelativeFile(filePath, text, type);
+Future _log(String filePath, String text) async{
+  return _logToRelativeFile(filePath, text);
 }
 
-Future<void> _logToRelativeFile(String filePath, String text, String type) async {
+Future<void> _logToRelativeFile(String filePath, String text) async {
   var f = File(filePath);
 
-  var pr = '$type::$text\n----------------------------|\n';
+  var pr = '$text\n------------------------|\n';
   await f.writeAsString(pr, mode: FileMode.append);
 }
 ///=============================================================================
-class IsolateData {
-  SendPort port;
+class DataHolder {
+  SendPort sendPort;
   String fileName;
   String basePath;
 
-  IsolateData(this.port, this.fileName, this.basePath);
+  DataHolder(this.sendPort, this.fileName, this.basePath);
 }
 
+
+
+/*
+void isoHandler2(SendPort port) {
+  var com = ReceivePort();
+  port.send(com.sendPort);
+}
+ */

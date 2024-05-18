@@ -2,7 +2,7 @@ name: assistance_kit
 description: tools package.
 # homepage: https://www.example.com
 
-version: 0.1.18
+version: 0.1.20
 publish_to: 'none'
 
 
@@ -10,7 +10,7 @@ environment:
   sdk: '>=3.0.0'
 
 dependencies:
-  postgresql2: 1.5.1                         # Edited:{is Edited type_converter.dart} 1.0.3
+  postgresql2: 1.5.1                         # Edited:{type_converter.dart}
   #postgres: 2.5.2                           # transaction
   file: ^7.0.0
   http: ^1.2.1

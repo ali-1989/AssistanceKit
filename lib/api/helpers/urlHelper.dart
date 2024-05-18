@@ -135,12 +135,17 @@ class UrlHelper {
   }
 
   static String? decodeUrl(String? url) {
-    try {
+    if(url == null){
+      return '';
+    }
+
+    return Uri.decodeFull(url);
+    /*try {
       return Uri.decodeFull(url!);
     }
     catch (e) {
-    return null;
-    }
+      return null;
+    }*/
   }
 
   static String? removeDomain(String url, {bool keepFirstSlash = true}) {
