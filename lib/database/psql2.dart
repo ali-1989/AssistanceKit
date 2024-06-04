@@ -121,10 +121,9 @@ class Psql2 {
         }
       }
     }
-    catch (e, tr){
-      var msg = '[psql2] error (queryCall method): $e\n  ===> query: $query';
-      ret.exceptionMessage = msg;
-      ret.setException(e, tr);
+    catch (e, st){
+      ret.exceptionInfo = '[psql2] queryCall() ===> query: $query';
+      ret.setException(e, st);
     }
 
     return ret;
@@ -188,10 +187,9 @@ class Psql2 {
         }
       }
     }
-    catch (e, tr){
-      var msg = '[psql2] error (execution method): $e\n  ===> query:$query';
-      ret.exceptionMessage = msg;
-      ret.setException(e, tr);
+    catch (e, st){
+      ret.exceptionInfo = '[psql2] execution()  ===> query:$query';
+      ret.setException(e, st);
     }
 
     return ret;
@@ -765,7 +763,7 @@ class PsqlResult {
   static void Function(PsqlResult psqlResult)? onError;
 
   Object? _exceptionObj;
-  String? exceptionMessage;
+  String? exceptionInfo;
   StackTrace? stackTrace;
   List<Row>? _rowResult;
   dynamic _oneResult;
