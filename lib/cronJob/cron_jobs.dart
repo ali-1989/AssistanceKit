@@ -32,23 +32,17 @@ class CronJobs {
     return job;
   }
 
-  // "Asia/Tehran"
+  // timezone: "Asia/Tehran"
   static Job createExactCronJob(String timezone, int hour, int min, Duration interval, VoidTask task) {
     final gr = GregorianDate();
     final timeZoneCurrent = TimeZone.getDateTimeZoned(timezone, gr.getDaylightState());
 
     final now = GregorianDate.from(timeZoneCurrent);
-    print('/// cron > today: $gr | timeZone date: $timeZoneCurrent | now with tz: $now');
     now.attachTimeZone(timezone);
     now.changeTime(hour, min, 0, 0);
     now.moveLocalToUTC();
 
-    /*if (now.convertToSystemDate().isBefore(DateHelper.nowMinusUtcOffset())) {
-        now.moveDay(1);
-      }*/
-
     final utc = now.convertToSystemDate();
-    print('///2 cron >   utc: $utc');
 
     final res = Job(task, interval, Duration.zero, utc);
     scheduleJob(res);
