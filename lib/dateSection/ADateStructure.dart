@@ -1,5 +1,5 @@
 import 'dart:core';
-import 'package:assistance_kit/dateSection/timeZone.dart';
+import 'package:assistance_kit/dateSection/time_zone.dart';
 
 part 'ADateStructureP1.dart';
 part 'ADateStructureP2.dart';

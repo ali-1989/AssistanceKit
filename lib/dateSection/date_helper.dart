@@ -1,5 +1,5 @@
 import 'package:assistance_kit/dateFormatter/src/date_format_base.dart';
-import 'package:assistance_kit/dateSection/timeZone.dart' as tz;
+import 'package:assistance_kit/dateSection/time_zone.dart' as tz;
 
 /// note: .toUtc() not change [millisecondsSinceEpoch] value
 

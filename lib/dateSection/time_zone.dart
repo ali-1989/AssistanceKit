@@ -20,7 +20,15 @@ class TimeZone {
       return res;
     }
 
-    return cTz;
+    for(final kv in _windowsTzToLinuxTz){
+      if(kv['linux'] == cTz){ // || kv['windows'] == cTz
+        return cTz;
+      }
+    }
+
+    final offset = DateTime.now().timeZoneOffset;
+
+    return getFirstTimeZoneByOffset(offset.inMilliseconds);
   }
 
   static String? linuxTzToWindowsTz(String linux){
@@ -37,7 +45,7 @@ class TimeZone {
 
   static String? windowsTzToLinuxTz(String windows){
     for(final m in _windowsTzToLinuxTz){
-      var win = m['windows'];
+      final win = m['windows'];
 
       if(win == windows) {
         return m['linux']!;
@@ -47,8 +55,26 @@ class TimeZone {
     return null;
   }
 
+  static String? changeOsTimezoneName(String cur){
+    for(final m in _windowsTzToLinuxTz){
+      final win = m['windows'];
+      final linux = m['linux'];
+
+      if(cur == win) {
+        return linux;
+      }
+      else if(cur == linux) {
+        return win;
+      }
+    }
+
+    return null;
+  }
+
   static ({int dayLight, int nonDayLight})? getOffsetAsMillis(String timezone){
-    final res = getUtcOffsetsForTimezone(timezone);
+    var res = getUtcOffsetsForTimezone(timezone);
+
+    res ??= getUtcOffsetsForTimezone(changeOsTimezoneName(timezone)?? '');
 
     if(res == null){
       return null;
@@ -106,7 +132,7 @@ class TimeZone {
 
   // (tehran & kabul) is same
   static String getFirstTimeZoneByOffset(int offsetMillis){
-    final list = getTimezoneNamesForOffset(offsetMillis);
+    final list = getTimezoneNamesForOffset(offsetMillis, offsetIsDayLight: false);
 
     if(list.isEmpty){
       return  '-tz null-';
@@ -116,13 +142,13 @@ class TimeZone {
   }
 
   static String getFirstTimeZoneByOffsetInDayLightPeriod(int offsetMillis){
-    final list = getTimezoneNamesForOffset(offsetMillis);
+    final list = getTimezoneNamesForOffset(offsetMillis, offsetIsDayLight: true);
 
     if(list.isEmpty){
       return  '-tz null-';
     }
 
-    return list[1];
+    return list[0];
   }
   ///===========================================================================
   static const Map<String, List<int>> _timezoneUTCOffsets = {

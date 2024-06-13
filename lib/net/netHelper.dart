@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:assistance_kit/api/helpers/textHelper.dart';
-import 'package:assistance_kit/shellAssistance.dart';
+import 'package:assistance_kit/shell_assistance.dart';
 import 'package:assistance_kit/api/system.dart';
 import 'package:http/http.dart' as http;
 import 'dart:math';

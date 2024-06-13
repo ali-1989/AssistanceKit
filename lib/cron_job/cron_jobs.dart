@@ -1,16 +1,19 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:assistance_kit/api/generator.dart';
 import 'package:assistance_kit/dateSection/ADateStructure.dart';
-import 'package:assistance_kit/dateSection/timeZone.dart';
+import 'package:assistance_kit/dateSection/time_zone.dart';
 
-part 'package:assistance_kit/cronJob/cron_job.dart';
-part 'package:assistance_kit/cronJob/utils.dart';
+part 'package:assistance_kit/cron_job/cron_job.dart';
+part 'package:assistance_kit/cron_job/utils.dart';
 
 class CronJobs {
   static final List<Job> _jobList = [];
   static int _serviceStartInMills = 0;
   static bool _isStarted = false;
   static late Timer _timer;
+  static bool debugMode = false;
+
 
   static void scheduleJob(Job job) {
     if(!_jobList.contains(job)){
@@ -49,19 +52,43 @@ class CronJobs {
     return res;
   }
 
-  static void start() {
+  static void start() async {
     if (_isStarted) {
       return;
     }
 
-    _timer = Timer.periodic(Duration(seconds: 60), _timerTick);
-    _serviceStartInMills = _currentTimeMillisUtc();
     _isStarted = true;
+
+    final cur = _currentTimeMillisUtc();
+    final curInSec = cur / 1000;
+    final overSec = curInSec % 60;
+
+    var wait = 0;
+
+    if(overSec > 0){
+      wait = 60 - overSec.toInt();
+    }
+
+    if(wait > 0){
+      await Future.delayed(Duration(seconds: wait));
+    }
+
+    _serviceStartInMills = ((curInSec.toInt() + wait) * 1000).toInt();
+    _timer = Timer.periodic(Duration(seconds: 60), _timerTick);
+
+    if(debugMode){
+      print('[CRON-JOB] started at: ${DateTime.fromMillisecondsSinceEpoch(_serviceStartInMills)} UTC. (after $wait sec waiting)');
+    }
   }
 
   static void purgeJob(Job job) {
     job._state = JobState.purge;
     _jobList.remove(job);
+
+    if(debugMode){
+      print('[CRON-JOB] a job purged. name:${job.name} id:${job.id}');
+    }
+
     _checkCanContinue();
   }
 
@@ -72,6 +99,10 @@ class CronJobs {
 
     _isStarted = false;
     _timer.cancel();
+
+    if(debugMode){
+      print('[CRON-JOB] shutdown');
+    }
   }
 
   static void _timerTick(timer) {
@@ -92,8 +123,23 @@ class CronJobs {
           continue;
         }
 
-        if (job.repeatedCount < 1 && (job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds) > nowInMills) {
-          continue;
+        if (job.repeatedCount < 1) {
+          if ((job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds) > nowInMills) {
+            continue;
+          }
+
+          final firstInMin = (job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds)/60000;
+          var checkInMin = nowInMills/60000;
+
+          if (firstInMin != checkInMin) {
+            while(checkInMin > firstInMin){
+              checkInMin = checkInMin - job.interval.inMinutes;
+            }
+
+            if(firstInMin != checkInMin){
+              continue;
+            }
+          }
         }
       }
 
@@ -111,6 +157,11 @@ class CronJobs {
 
         job._repeatedCount++;
         job._lastTick = nowInMills;
+
+        if(debugMode){
+          print('[CRON-JOB] a job called. name:${job.name} id:${job.id}');
+        }
+
         job.getTask().call();
       }
     }

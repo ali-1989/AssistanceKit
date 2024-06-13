@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:assistance_kit/api/helpers/mathHelper.dart';
-import 'package:assistance_kit/shellAssistance.dart';
+import 'package:assistance_kit/shell_assistance.dart';
 
 class SystemInfo {
   String kernel_name = '';    // Linux

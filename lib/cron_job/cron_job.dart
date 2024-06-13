@@ -1,7 +1,8 @@
-part of 'package:assistance_kit/cronJob/cron_jobs.dart';
+part of 'package:assistance_kit/cron_job/cron_jobs.dart';
 
 class Job {
 	String _id;
+	String name;
 	VoidTask _task;
 	Duration _interval;
 	final DateTime? firstCallAt;
@@ -12,10 +13,12 @@ class Job {
 	int _lastTick = 0;
 
 	/// [firstCallAt] must be in UTC
-	Job(VoidTask task, Duration interval, this.startDelay, this.firstCallAt)
+	Job(VoidTask task, Duration interval, this.startDelay, DateTime? firstCallAt)
 			: _id = Generator.generateKey(5),
 				_interval = interval,
-		_task = task
+		_task = task,
+	name = _generateName(5),
+	firstCallAt = firstCallAt == null? null : DateTime(firstCallAt.year, firstCallAt.month, firstCallAt.day, firstCallAt.hour, firstCallAt.minute, 0, 0, 0)
 	{
 		if(interval < Duration(seconds: 60)) {
 		  throw IntervalException();
@@ -79,6 +82,10 @@ class Job {
 
 	void stop() {
 		_state = JobState.stop;
+
+		if(CronJobs.debugMode){
+			print('[CRON-JOB] a job stopped. name:$name id:$id');
+		}
 	}
 
 	void purge() {
@@ -91,5 +98,17 @@ class Job {
 		}
 
 		return DateTime.fromMillisecondsSinceEpoch(_lastTick);
+	}
+
+	static String _generateName(int len){
+	final s = 'abcdefghijklmnopqrstwxyzABCEFGHIJKLMNOPQRSTUWXYZ';
+	var res = '';
+
+	for(var i=0; i<len; i++) {
+	final j = Random().nextInt(s.length);
+	res += s[j];
+	}
+
+	return res;
 	}
 }

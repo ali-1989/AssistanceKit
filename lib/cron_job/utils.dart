@@ -1,4 +1,4 @@
-part of 'package:assistance_kit/cronJob/cron_jobs.dart';
+part of 'package:assistance_kit/cron_job/cron_jobs.dart';
 
 typedef VoidTask = void Function();
 ///=============================================================================

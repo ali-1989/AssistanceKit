@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:assistance_kit/api/logger/logger.dart';
-import 'package:assistance_kit/dateSection/dateHelper.dart';
+import 'package:assistance_kit/dateSection/date_helper.dart';
 
 Future main(List<String> arguments) async {
   var startInfo = '''
