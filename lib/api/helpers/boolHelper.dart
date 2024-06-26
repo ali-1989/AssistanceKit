@@ -24,7 +24,7 @@ class BoolHelper{
     }
 
     item = item.toString().toLowerCase();
-    return item == 'true' || item == 't' || item == 'yes' || item == '1';
+    return item == 'true' || item == 't' || item == 'yes' || item == 'y' || item == '1' || item == '1.0';
   }
 
   static String? boolToString(bool? val) {
