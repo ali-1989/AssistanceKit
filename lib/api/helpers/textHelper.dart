@@ -18,7 +18,7 @@ class TextHelper{
 		});
 	}
 
-	static String subByCharCountSafe(String? str, int count) {
+	static String subStringCountSafe(String? str, int count) {
 		if (isEmptyOrNull(str)) {
 		  return '';
 		}
