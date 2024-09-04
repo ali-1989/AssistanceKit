@@ -124,7 +124,7 @@ class CronJobs {
       if (job.firstCallAt != null) {
         if (job.firstCallAt!.millisecondsSinceEpoch > nowInMills) {
           if(debugMode){
-            print('[CRON-JOB] job skip [s1]. name:${job.name} id:${job.id}');
+            print('[CRON-JOB] job with firstCallAt skip [s1]. name:${job.name} id:${job.id}');
           }
           continue;
         }
@@ -132,13 +132,13 @@ class CronJobs {
         if (job.repeatedCount < 1) {
           if ((job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds) > nowInMills) {
             if(debugMode){
-              print('[CRON-JOB] job skip [s2]. name:${job.name} id:${job.id}');
+              print('[CRON-JOB] job skip [s2], firstCall in future. name:${job.name} id:${job.id}');
             }
             continue;
           }
 
-          final firstInMin = (job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds)/60000;
-          var checkInMin = nowInMills/60000;
+          final firstInMin = (job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds)~/60000;
+          var checkInMin = nowInMills~/60000;
 
           if (firstInMin != checkInMin) {
             while(checkInMin > firstInMin){
@@ -147,7 +147,7 @@ class CronJobs {
 
             if(firstInMin != checkInMin){
               if(debugMode){
-                print('[CRON-JOB] job skip [s3]. name:${job.name} id:${job.id}');
+                print('[CRON-JOB] job skip [s3], first:$firstInMin  now:$checkInMin.  name:${job.name} id:${job.id}');
               }
               continue;
             }
