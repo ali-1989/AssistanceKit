@@ -69,6 +69,9 @@ class CronJobs {
       wait = 60 - overSec.toInt();
     }
 
+    if(CronJobs.debugMode){
+      print('[CRON-JOB] starting service...');
+    }
     if(wait > 0){
       await Future.delayed(Duration(seconds: wait));
     }
@@ -77,7 +80,7 @@ class CronJobs {
     _timer = Timer.periodic(Duration(seconds: 60), _timerTick);
 
     if(debugMode){
-      print('[CRON-JOB] started at: ${DateTime.fromMillisecondsSinceEpoch(_serviceStartInMills)} UTC. (after $wait sec waiting)');
+      print('[CRON-JOB] service started at: ${DateTime.fromMillisecondsSinceEpoch(_serviceStartInMills)} UTC. (after $wait sec waiting)');
     }
   }
 
@@ -101,7 +104,7 @@ class CronJobs {
     _timer.cancel();
 
     if(debugMode){
-      print('[CRON-JOB] shutdown');
+      print('[CRON-JOB] service is shutdown.');
     }
   }
 
@@ -120,11 +123,17 @@ class CronJobs {
 
       if (job.firstCallAt != null) {
         if (job.firstCallAt!.millisecondsSinceEpoch > nowInMills) {
+          if(debugMode){
+            print('[CRON-JOB] job skip [s1]. name:${job.name} id:${job.id}');
+          }
           continue;
         }
 
         if (job.repeatedCount < 1) {
           if ((job.firstCallAt!.millisecondsSinceEpoch + job.interval.inMilliseconds) > nowInMills) {
+            if(debugMode){
+              print('[CRON-JOB] job skip [s2]. name:${job.name} id:${job.id}');
+            }
             continue;
           }
 
@@ -137,6 +146,9 @@ class CronJobs {
             }
 
             if(firstInMin != checkInMin){
+              if(debugMode){
+                print('[CRON-JOB] job skip [s3]. name:${job.name} id:${job.id}');
+              }
               continue;
             }
           }
@@ -145,6 +157,9 @@ class CronJobs {
 
       if (job.startDelay.inSeconds > 0) {
         if (_serviceStartInMills + job.startDelay.inMilliseconds > nowInMills) {
+          if(debugMode){
+            print('[CRON-JOB] job skip [s4]. name:${job.name} id:${job.id}');
+          }
           continue;
         }
       }
@@ -152,6 +167,9 @@ class CronJobs {
       if (job._lastTick + job.interval.inMilliseconds <= nowInMills) {
         if (job.mustCancelAfter > 0 && job.mustCancelAfter >= job.repeatedCount) {
           job._state = JobState.finish;
+          if(debugMode){
+            print('[CRON-JOB] job skip [s5]. name:${job.name} id:${job.id}');
+          }
           continue;
         }
 
@@ -159,7 +177,7 @@ class CronJobs {
         job._lastTick = nowInMills;
 
         if(debugMode){
-          print('[CRON-JOB] a job called. name:${job.name} id:${job.id}');
+          print('[CRON-JOB] a job called. name:${job.name} id:${job.id}  - ${DateTime.now()}');
         }
 
         job.getTask().call();

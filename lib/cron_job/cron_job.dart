@@ -67,10 +67,16 @@ class Job {
 
 	void start() {
 		if(_state == JobState.running) {
+			if(CronJobs.debugMode){
+				print('[CRON-JOB] start(). the $name job is running before.');
+			}
 			return;
 		}
 
 		if(!CronJobs.contains(this)) {
+			if(CronJobs.debugMode){
+				print('[CRON-JOB] This job can not start, may be this is purge.');
+			}
 			throw Exception('This job can not start, may be this is purge.');
 		}
 
