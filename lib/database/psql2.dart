@@ -99,8 +99,8 @@ class Psql2 {
     return firstRow.toMap()[columnName];
   }
 
-  /// values: queryCall('select color from tb WHERE id = @id',  values : {'id': 5})
-  /// values: queryCall('select color from tb WHERE id IN (@0, @1, @2)',  values: ['10','20','30'])
+  /// values: queryCall('SELECT color FROM tb WHERE id = @id',  values : {'id': 5})
+  /// values: queryCall('SELECT color FROM tb WHERE id IN (@0, @1, @2)',  values: ['10','20','30'])
   Future<PsqlResult> queryCall(String query, {dynamic values, bool autoClose = false}) async {
     if(!_isPrepare) {
       return PsqlResult()..setException(Exception('psql is not prepared.'), null);
@@ -317,7 +317,7 @@ class Psql2 {
         buffer.write(val);
       }
       else {
-        buffer.write("'$val'");
+        buffer.write("\$token\$$val\$token\$");
       }
     }
     else {
@@ -543,7 +543,7 @@ class Psql2 {
     return execution(query, values: values);
   }
 
-  /// updateKv(DbNames.T_Users, value, ' userId = $userId')
+  /// sample: updateKv(DbNames.T_Users, value, ' userId = $userId')
   Future<PsqlResult> updateKv(String tbName, Map<String, dynamic> setKv, String? where, {bool concatJson = false}) async{
     return update(tbName, _genUpdateSetStatementKv(setKv, concatJson: concatJson), where);
   }
@@ -579,7 +579,7 @@ class Psql2 {
     return res;
   }
 
-  // que: SELECT EXISTS (SELECT ...)
+  /// sample: SELECT EXISTS (SELECT ...)
   Future<PsqlResult> existQuery(String que) async {
     final res = await queryCall(que);
 
@@ -592,7 +592,8 @@ class Psql2 {
     return res;
   }
 
-  /// note: column name must be lowercase
+  /// note: column name must be lowercase.
+  /// Use columnValue() for get result.
   Future<PsqlResult> getColumn(String querySt, String columnName) async {
     final cursor = await queryCall(querySt);
 
@@ -825,14 +826,17 @@ class PsqlResult {
     return !hasError() && _intResult != null && _intResult! > 0;
   }
 
+  /// same of isExecuted()
   bool exist(){
     return isExecuted();
   }
 
+  /// return first column of first record.
   dynamic returnValue(){
     return _rowResult!.first.toList().first;
   }
 
+  /// Use this for get the result for getColumn() method.
   T columnValue<T>(){
     return _oneResult as T;
   }

@@ -69,9 +69,8 @@ class CronJobs {
       wait = 60 - overSec.toInt();
     }
 
-    if(CronJobs.debugMode){
-      print('[CRON-JOB] starting service...');
-    }
+    print('[CRON-JOB] starting service...');
+
     if(wait > 0){
       await Future.delayed(Duration(seconds: wait));
     }
@@ -103,9 +102,7 @@ class CronJobs {
     _isStarted = false;
     _timer.cancel();
 
-    if(debugMode){
-      print('[CRON-JOB] service is shutdown.');
-    }
+    print('[CRON-JOB] service is shutdown.');
   }
 
   static void _timerTick(timer) {

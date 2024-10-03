@@ -120,7 +120,10 @@ Future<void> _logToRelativeFile(String filePath, String text) async {
   var f = File(filePath);
 
   var pr = '$text\n------------------------|\n';
-  await f.writeAsString(pr, mode: FileMode.append);
+  final oFile = await f.open(mode: FileMode.append);
+  oFile.writeStringSync(pr);
+  oFile.closeSync();
+  //await f.writeAsString(pr, mode: FileMode.append);
 }
 ///=============================================================================
 class DataHolder {
