@@ -3,6 +3,7 @@
 .packages
 .idea/
 .git/
+_files/
 
 # Conventional directory for build outputs
 build/
