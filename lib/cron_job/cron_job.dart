@@ -14,7 +14,7 @@ class Job {
 
 	/// [firstCallAt] must be in UTC
 	Job(VoidTask task, Duration interval, this.startDelay, DateTime? firstCallAt)
-			: _id = Generator.generateKey(5),
+			: _id = GeneratorAssistance.generateAlphabet(5),
 				_interval = interval,
 		_task = task,
 	name = _generateName(5),

@@ -1,8 +1,11 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:math';
-import 'package:assistance_kit/api/generator.dart';
-import 'package:assistance_kit/dateSection/ADateStructure.dart';
-import 'package:assistance_kit/dateSection/time_zone.dart';
+
+// Project imports:
+import 'package:assistance_kit/api/assistance/generator_assistance.dart';
+import 'package:assistance_kit/date_section/date_structure.dart';
+import 'package:assistance_kit/date_section/time_zone.dart';
 
 part 'package:assistance_kit/cron_job/cron_job.dart';
 part 'package:assistance_kit/cron_job/utils.dart';

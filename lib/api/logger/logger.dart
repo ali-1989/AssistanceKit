@@ -1,8 +1,11 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:assistance_kit/api/helpers/fileHelper.dart';
+
+// Project imports:
+import 'package:assistance_kit/api/assistance/file_assistance.dart';
 
 class Logger {
   static Logger? _staticLogger;
@@ -78,7 +81,7 @@ void isolateFunction(DataHolder dataHolder){
     final f = File(p);
 
     if(!f.existsSync()) {
-      await FileHelper.createNewFile(p);
+      await FileAssistance.createNewFile(p);
       return p;
     }
     else {

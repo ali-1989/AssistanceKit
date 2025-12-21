@@ -2,18 +2,23 @@ name: assistance_kit
 description: tools package.
 # homepage: https://www.example.com
 
-version: 0.1.29
+version: 0.1.5
 publish_to: 'none'
 
 
 environment:
-  sdk: '>=3.0.0'
+  sdk: '>=3.9.0'
 
 dependencies:
-  postgresql2: 1.5.1                         # Edited:{type_converter.dart}
+  #postgresql2: 1.5.1                         # Edited:{type_converter.dart}
+  postgresql2: 1.7.0                         # Edited:{type_converter.dart}
   #postgres: 2.5.2                           # transaction
-  file: ^7.0.0
-  http: ^1.2.2
+  file: any
+  http: any
+  convert: any
+  intl: any
+  #import_sorter: ^4.6.0
+
 
 dev_dependencies:
   test: any

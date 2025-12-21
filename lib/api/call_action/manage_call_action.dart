@@ -1,41 +1,6 @@
 // Dart imports:
 import 'dart:async';
 
-/*
-  if(!AppManager.timeoutCache.addTimeout('getUtcTimeOfServer', Duration(seconds: 5))){
-      return Future.value(false);
-    }
- */
-
-class TimeoutCache {
-  final List<String> _timers = [];
-
-  TimeoutCache();
-
-  void clearAll(){
-    _timers.clear();
-  }
-
-  void deleteTimeout(String key){
-    _timers.remove(key);
-  }
-
-  bool addTimeout(String key, Duration dur){
-    if(_timers.contains(key)) {
-      return false;
-    }
-
-    _timers.add(key);
-    Timer(dur, (){_timers.remove(key);});
-
-    return true;
-  }
-
-  bool existTimeout(String key){
-    return _timers.contains(key);
-  }
-}
-///===================================================================================================
 class RewindCall {
   static final Map _holder = <String, RewindCall>{};
   Function? actionFn;
@@ -98,7 +63,7 @@ class RewindCall {
     onStartFn = null;
     _holder.removeWhere((name, caller) => caller == this);
   }
-  ///---------------------------------------------------------------
+
   static void purgeItem(String name){
     if(_holder.containsKey(name)) {
       _holder[name]!.purge();
@@ -168,4 +133,3 @@ class ManageCallInDuration {
     }
   }
 }
-///================================================================================================

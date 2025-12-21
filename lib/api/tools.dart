@@ -1,4 +1,4 @@
-
+// Dart imports:
 import 'dart:math';
 
 class Tools {
@@ -11,8 +11,8 @@ class Tools {
 
     final txt = obj.toString();
 
-    for(int i = 0; i< txt.length; i+= 1000){
-      print(txt.substring(i, min(i+1000, txt.length)));
+    for(int i = 0; i< txt.length; i+= 700){
+      print(txt.substring(i, min(i+700, txt.length)));
     }
   }
 
@@ -37,7 +37,7 @@ class Tools {
   static Future<String?> selectDirectory(){
     return FilePicker.platform.getDirectoryPath();
   }*/
-  ///..... Youtube .............................................................
+  ///..... Youtube ..............................................................
   static bool isYoutubeSameUrl(String? link){
     return link != null &&
         (link.contains('youtube.')

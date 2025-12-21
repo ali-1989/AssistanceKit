@@ -1,6 +1,6 @@
 /// CustomTrace programInfo = CustomTrace(StackTrace.current);
 
-class CustomTrace {
+class TraceParser {
   final StackTrace _trace;
   String? fileName;
   String? functionName;
@@ -8,7 +8,11 @@ class CustomTrace {
   int? lineNumber;
   int? columnNumber;
 
-  CustomTrace(StackTrace stackTrace): _trace = stackTrace {
+  TraceParser(): _trace = StackTrace.current {
+    _parseTrace();
+  }
+
+  TraceParser.from(StackTrace stackTrace): _trace = stackTrace {
     _parseTrace();
   }
 
@@ -27,15 +31,15 @@ class CustomTrace {
 
   void _parseTrace() {
     /* The trace comes with multiple lines of strings, (each line is also known as a frame) */
-    var frames = _trace.toString().split('\n');
+    final frames = _trace.toString().split('\n');
     functionName = _getFunctionNameFromFrame(frames[0]);
     callerFunctionName = _getFunctionNameFromFrame(frames[1]);
 
-    var traceString = frames[0];
-    var indexOfFileName = traceString.indexOf(RegExp(r'[A-Za-z]+.dart'));
+    final traceString = frames[0];
+    final indexOfFileName = traceString.indexOf(RegExp(r'[A-Za-z]+.dart'));
 
-    var fileInfo = traceString.substring(indexOfFileName);
-    var listOfInfos = fileInfo.split(':');
+    final fileInfo = traceString.substring(indexOfFileName);
+    final listOfInfos = fileInfo.split(':');
     fileName = listOfInfos[0];
     lineNumber = int.parse(listOfInfos[1]);
     var columnStr = listOfInfos[2];

@@ -1,10 +1,13 @@
 //library nat_info;
 
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:convert/convert.dart';
+// Dart imports:
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+
+// Package imports:
+import 'package:convert/convert.dart';
 
 class NAT {
   NAT._();

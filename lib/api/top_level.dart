@@ -2,6 +2,8 @@
 // (List<int>).hashCode  !=  (List<int?>).hashCode
 // l1 = [1,2,3] :       l1.runtimeType.toString() =>  List<int>
 // l2 = [1,2,3, null] : l2.runtimeType.toString() =>  List<int?>
+import 'package:assistance_kit/models/method_result.dart';
+
 bool isSameType(Type t1, Type t2){
   return t1.hashCode == t2.hashCode
       || (t1).toString().replaceFirst('?', '') == (t2).toString().replaceFirst('?', '');
@@ -11,6 +13,10 @@ bool isSameType(Type t1, Type t2){
 T? reType<T>(dynamic input){
   if(input == null){
     return null;
+  }
+
+  if(T == dynamic){
+    return input;
   }
 
   if(input.runtimeType == T){
@@ -65,9 +71,6 @@ T? reType<T>(dynamic input){
     return res as T;
   }
 
-  /// list
-  //if (List is T) {}
-
   return null;
 }
 
@@ -80,9 +83,21 @@ List<S>? reTypeList<S>(dynamic input){
     return input;
   }
 
+  S mapper(e) {
+    if(e is Map){
+      return e as S;
+    }
+
+    if(e is List){
+      return e as S;
+    }
+
+    return reType<S>(e)!;
+  }
+
   /// List
   if(input is List){
-    return input.map<S>((e) => reType<S>(e)!).toList();
+    return input.map<S>(mapper).toList();
   }
 
   return null;
@@ -99,8 +114,36 @@ Map<K,V>? reTypeMap<K,V>(dynamic input){
 
   /// Map
   if(input is Map){
-    return input.map<K,V>((k,v) => MapEntry<K,V>(reType<K>(k)!, reType<V>(v)!));
+    return input.map<K,V>((a,b) => MapEntry<K,V>(reType<K>(a)!, reType<V>(b)!));
   }
 
   return null;
+}
+
+MethodResult<T> toInstance<T>(Map<String, dynamic> data, T Function(Map<String, dynamic> map) fn){
+  final mResult = MethodResult<T>();
+
+  try{
+    if(data['user_id'] == null && data['requester_id'] != null){
+      data['user_id'] = int.parse(data['requester_id']);
+    }
+
+    mResult.data = fn.call(data);
+  }
+  catch (e, stack){
+    mResult.exception = e;
+    mResult.stackTrace = stack;
+  }
+
+  return mResult;
+}
+
+bool areNull(List<dynamic> items) {
+  for(final x in items){
+    if(x == null){
+      return true;
+    }
+  }
+  
+  return false;
 }
