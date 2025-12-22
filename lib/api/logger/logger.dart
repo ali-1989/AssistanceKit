@@ -19,54 +19,45 @@ class Logger {
     return _staticLogger!;
   }
 
-  Logger(this._dirPath, {String? fileName}): _fileName = fileName?? 'log' {
+  Logger(this._dirPath, {String? fileName}) : _fileName = fileName ?? 'log' {
     final receiver = ReceivePort();
     _initCompleter = Completer();
     final msg = DataHolder(receiver.sendPort, _fileName, _dirPath);
 
     final f = Isolate.spawn<DataHolder>(isolateFunction, msg);
 
-    /*f.then((isolate) {
-      receiver.first.then((port){
-        _sendPort = port;
-        receiver.close();
-        _initCompleter.complete(true);
+    f.then((isolate) {
+      receiver.first.then((port) {
+        if (port is SendPort) {
+          _sendPort = port;
+          receiver.close();
+          _initCompleter.complete(true);
+        }
       });
-    });
-*/
-
-    late StreamSubscription sub;
-
-    sub = receiver.listen((message) {
-      if (message is SendPort) {
-        _sendPort = message;
-        _initCompleter.complete(true);
-        sub.cancel();
-      }
     });
   }
 
   Future<bool> isPrepare() => _initCompleter.future;
 
-  void logToAll(dynamic obj){
+  void logToAll(dynamic obj) {
     logToScreen(obj);
     logToFile(obj);
   }
 
-  void logToFile(dynamic text){
+  void logToFile(dynamic text) {
     _sendPort?.send(['◄LOGGER►$text']);
   }
 
-  void logToScreen(dynamic text){
+  void logToScreen(dynamic text) {
     print('◄LOGGER►${text.toString()}');
   }
 
-  static String getStoragePath(){
+  static String getStoragePath() {
     //return MemoryFileSystem().systemTempDirectory.path;
     // G:/Programming/DartProjects/project/bin/run.dart
     var pat = Platform.script.path;
 
-    if(Platform.isWindows) {
+    if (Platform.isWindows) {
       if (pat.startsWith(r'\') || pat.startsWith(r'/')) {
         pat = pat.substring(1);
       }
@@ -78,77 +69,73 @@ class Logger {
     return f.path;
   }
 }
+
 ///=============================================================================
-void isolateFunction(DataHolder dataHolder){
+void isolateFunction(DataHolder dataHolder) {
   final receiver = ReceivePort();
-  final Queue<String> _queue = Queue();
-  bool _isWriting = false;
+  final _que = Queue<String>();
+  bool _isProcessing = false;
   var _counter = 1;
 
   dataHolder.sendPort.send(receiver.sendPort);
 
-  ///---------------------------------------------
   Future<String> getFilePath() async {
-    final p = '${dataHolder.basePath}${Platform.pathSeparator}${dataHolder.fileName}$_counter.txt';
+    final p = dataHolder.basePath + Platform.pathSeparator + '${dataHolder.fileName}$_counter.txt';
     final f = File(p);
 
-    if (!await f.exists()) {
-      await FileAssistance.createNewFile(p);
+    if (!f.existsSync()) {
+      await f.create(recursive: true);
       return p;
-    }
+    } else {
+      final size = await f.length();
 
-    if (await f.length() < 1024000) {
-      return p;
-    }
+      if (size < 1024000) {
+        return p;
+      }
 
-    _counter++;
-    return getFilePath();
+      _counter++;
+      return getFilePath();
+    }
   }
-  ///---------------------------------------------
+
   Future<void> processQueue() async {
-    if (_isWriting){
-      return;
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    while (_que.isNotEmpty) {
+      final message = _que.removeFirst();
+
+      try {
+        final path = await getFilePath();
+        await _logToRelativeFile(path, message);
+      }
+      catch (e) {
+        print("Logger Isolate Error: $e");
+      }
     }
 
-    _isWriting = true;
-
-    while (_queue.isNotEmpty) {
-      final text = _queue.removeFirst();
-      final path = await getFilePath();
-      await _logToRelativeFile(path, text);
-    }
-
-    _isWriting = false;
+    _isProcessing = false;
   }
 
   receiver.listen((message) {
-    _queue.add(message[0]);
-    processQueue();
-  });
-  ///---------------------------------------------
-  receiver.listen((message) async {
-    _queue.add(message);
-
-    while(_queue.isNotEmpty) {
-      final lis = _queue.removeFirst(); //_queue.elementAt(0);
-      await _log(await getFilePath(), lis[0]);
+    if (message is List && message.isNotEmpty) {
+      _que.add(message[0].toString());
+      processQueue();
     }
   });
 }
 
-Future _log(String filePath, String text) async{
-  return _logToRelativeFile(filePath, text);
-}
-
 Future<void> _logToRelativeFile(String filePath, String text) async {
-  var f = File(filePath);
+  final f = File(filePath);
 
-  var pr = '$text\n------------------------|\n';
-  /*this is not write full code: final oFile = await f.open(mode: FileMode.append, );
-  oFile.writeStringSync(pr);
-  oFile.closeSync();*/
-  await f.writeAsString(pr, mode: FileMode.append, flush: true);
+  final content = '$text\n------------------------|\n';
+
+  final sink = f.openWrite(mode: FileMode.append);
+  sink.write(content);
+  await sink.flush();
+  await sink.close();
 }
+
 ///=============================================================================
 class DataHolder {
   SendPort sendPort;
@@ -158,11 +145,9 @@ class DataHolder {
   DataHolder(this.sendPort, this.fileName, this.basePath);
 }
 
-
-
 /*
 void isoHandler2(SendPort port) {
-  var com = ReceivePort();
-  port.send(com.sendPort);
+var com = ReceivePort();
+port.send(com.sendPort);
 }
- */
+*/
