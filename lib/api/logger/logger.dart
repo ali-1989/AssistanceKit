@@ -4,9 +4,6 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
 
-// Project imports:
-import 'package:assistance_kit/api/assistance/file_assistance.dart';
-
 class Logger {
   static Logger? _staticLogger;
   final String _dirPath;
@@ -145,9 +142,3 @@ class DataHolder {
   DataHolder(this.sendPort, this.fileName, this.basePath);
 }
 
-/*
-void isoHandler2(SendPort port) {
-var com = ReceivePort();
-port.send(com.sendPort);
-}
-*/
