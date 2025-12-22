@@ -26,12 +26,23 @@ class Logger {
 
     final f = Isolate.spawn<DataHolder>(isolateFunction, msg);
 
-    f.then((isolate) {
+    /*f.then((isolate) {
       receiver.first.then((port){
         _sendPort = port;
         receiver.close();
         _initCompleter.complete(true);
       });
+    });
+*/
+
+    late StreamSubscription sub;
+
+    sub = receiver.listen((message) {
+      if (message is SendPort) {
+        _sendPort = message;
+        _initCompleter.complete(true);
+        sub.cancel();
+      }
     });
   }
 
