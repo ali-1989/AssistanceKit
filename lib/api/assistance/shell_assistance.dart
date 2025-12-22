@@ -32,6 +32,26 @@ class ShellAssistance {
     //process.stderr
     return process;
   }
+
+  static Future<Process> shellStart(String command, List<String> arguments,{
+    String? workingDirectory,
+    Map<String, String>? environment,
+    bool includeParentEnvironment = true,
+    bool runInShell = false,
+    ProcessStartMode mode = ProcessStartMode.detached,
+  }) async {
+
+    var process = await Process.start(
+      command, arguments,
+      runInShell: runInShell,
+      environment: environment,
+      workingDirectory: workingDirectory,
+      includeParentEnvironment: includeParentEnvironment,
+      mode: mode,
+    );
+
+    return process;
+  }
 }
 
 /*
